@@ -31,11 +31,15 @@ Defaults chosen during implementation, all open to change:
 
 ## Current status
 
-- All source is written (~1,500 lines) and passes a Swift syntax check (`swiftc -parse`).
-- `WordDiff` and `Prompts.clean` were compiled and run on Linux and behave correctly.
-- **The app has never been compiled on macOS.** The AppKit and SwiftUI code was written without a
-  type checker, so expect a handful of compile errors on the first build.
-- Not yet in git. The repo is https://github.com/tmass1/tidy
+_Updated October 21, 2026._
+
+- All source is written (~2,000 lines across 10 files) and is in git at https://github.com/tmass1/tidy.
+- **Compiles on macOS** (Apple Swift 6.4 toolchain, Swift 5 language mode) with zero errors and zero
+  warnings, debug and release. No compile fixes were needed.
+- `bash build.sh` bundles, signs, installs and launches Tidy.app; it runs in the menu bar.
+- The copy/paste path logs to NSLog (`Tidy: triggered from…`, `copy changed the pasteboard after…`,
+  `pasting into…`) so missed selections and wrong-app pastes can be diagnosed from `log stream`.
+- **Core-loop QA hasn't started.** Nothing in the QA checklist below has been verified on a Mac yet.
 
 ## First tasks, in order
 
