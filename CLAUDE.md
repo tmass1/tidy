@@ -87,8 +87,13 @@ is appended to every system prompt.
   reliable place. Standard editing (⌘C/V/X/A/Z) is also forwarded there with `NSApp.sendAction`.
 - SwiftUI views that are created from another file and have `private` state need an explicit `init`
   (see `PanelView`).
-- Use AppKit colors (`NSColor.labelColor`, `.systemRed.withAlphaComponent`) in attributed strings
-  so they adapt to light/dark mode automatically.
+- **Design system: Cabin's Desk finish via CabinKit.** `Sources/Tidy/Cabin/` is CabinKit, copied from
+  tmass1/cabin with `node scripts/swift.mjs --sync ../tidy/Sources/Tidy/Cabin` (run from the cabin repo).
+  Don't edit those files; change Cabin and sync. Colours are tokens (`Cabin.destructive`, `Cabin.NS.success`
+  in attributed strings, `Cabin.tint(Cabin.Values.successFill, 0.22)` for washes), never `Color.red` or
+  `NSColor.systemGreen`; buttons are `.buttonStyle(.cabin(.primary))` (one per view), `.cabin`, `.cabin(.ghost)`;
+  keys in a button are `CabinKbd(keys, style: .plain)`. Guide: `docs/swift.md` in the cabin repo.
+- `NSColor.labelColor` and `.secondaryLabelColor` stay for text drawn over the panel's vibrancy.
 - Copy in the UI is plain and direct. No exclamation marks, no "Oops".
 - Model IDs live only in `Claude.models`. Check current IDs at https://docs.claude.com before
   changing them.
