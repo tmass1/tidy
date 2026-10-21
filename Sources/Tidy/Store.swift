@@ -126,6 +126,7 @@ final class Store: ObservableObject {
 
     func registerHotKey() {
         hotKeyRegistered = HotKeyCenter.shared.register(shortcut)
+        if !hotKeyRegistered { NSLog("Tidy: couldn't register \(shortcut.display), another app may own it") }
     }
 
     func setLaunchAtLogin(_ on: Bool) {

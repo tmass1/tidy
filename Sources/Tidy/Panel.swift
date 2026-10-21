@@ -66,11 +66,14 @@ final class PanelController {
         let restore = store.restoreClipboard
         Task { @MainActor in
             if NSWorkspace.shared.frontmostApplication != app {
-                _ = app.activate(options: [])
+                let ok = app.activate(options: [])
+                NSLog("Tidy: \(app.bundleIdentifier ?? "source") wasn't frontmost, activate returned \(ok)")
             }
             for _ in 0..<20 where NSWorkspace.shared.frontmostApplication != app {
                 try? await Task.sleep(nanoseconds: 25_000_000)
             }
+            let front = NSWorkspace.shared.frontmostApplication
+            NSLog("Tidy: pasting into \(front?.bundleIdentifier ?? "nil"), expected \(app.bundleIdentifier ?? "nil")")
             try? await Task.sleep(nanoseconds: 90_000_000)
             await Selection.paste(text, restoreClipboard: restore)
         }

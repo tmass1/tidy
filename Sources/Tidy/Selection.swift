@@ -24,15 +24,20 @@ enum Selection {
         press(CGKeyCode(kVK_ANSI_C))
 
         var text: String?
-        for _ in 0..<30 {
+        for attempt in 1...30 {
             try? await Task.sleep(nanoseconds: 20_000_000)
             if pb.changeCount != before {
                 try? await Task.sleep(nanoseconds: 20_000_000)
                 text = pb.string(forType: .string)
+                NSLog("Tidy: copy changed the pasteboard after ~\(attempt * 20) ms, \(text?.count ?? 0) chars")
                 break
             }
         }
-        if pb.changeCount != before { restore(saved) }
+        if pb.changeCount != before {
+            restore(saved)
+        } else {
+            NSLog("Tidy: copy didn't change the pasteboard within 600 ms")
+        }
         guard let text, !text.trimmed.isEmpty else { return nil }
         return text
     }

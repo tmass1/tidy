@@ -36,7 +36,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         let source = Self.frontmostOtherApp()
+        NSLog("Tidy: triggered from \(source?.bundleIdentifier ?? "nil")")
         guard Selection.isTrusted(prompt: false) else {
+            NSLog("Tidy: not trusted for Accessibility")
             _ = Selection.isTrusted(prompt: true)
             panel.show(
                 text: "", source: source, hadSelection: false,
