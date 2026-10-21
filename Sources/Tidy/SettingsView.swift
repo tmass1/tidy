@@ -26,6 +26,7 @@ struct SettingsView: View {
         }
         .padding(16)
         .frame(minWidth: 720, minHeight: 540)
+        .cabinDesk()
     }
 }
 
@@ -49,7 +50,7 @@ struct GeneralTab: View {
                 }
                 HStack(spacing: 6) {
                     Image(systemName: store.hasAPIKey ? "checkmark.circle.fill" : "exclamationmark.circle")
-                        .foregroundStyle(store.hasAPIKey ? Color.green : Color.orange)
+                        .foregroundStyle(store.hasAPIKey ? Cabin.success : Cabin.warning)
                     Text(store.hasAPIKey ? "Key saved" : "No key yet")
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -73,15 +74,14 @@ struct GeneralTab: View {
                 if !store.hotKeyRegistered {
                     Text("Another app already uses that shortcut (Hammerspoon, maybe). Pick a different one.")
                         .font(.callout)
-                        .foregroundStyle(Color.orange)
+                        .foregroundStyle(Cabin.warning)
                 }
             }
 
             Section("Permissions & startup") {
                 LabeledContent("Accessibility") {
                     if trusted {
-                        Label("Allowed", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(Color.green)
+                        CabinBadge("Allowed", tone: .success, symbol: "checkmark.circle.fill")
                     } else {
                         Button("Open System Settings…") { Selection.openAccessibilitySettings() }
                     }

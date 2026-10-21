@@ -361,7 +361,9 @@ struct PanelView: View {
         .padding(.horizontal, 18)
         .padding(.bottom, 16)
         .frame(minWidth: 560, minHeight: 440)
-        .background(VisualEffect().ignoresSafeArea())
+        // The panel floats over the app you're writing in, so it keeps the system's vibrancy (CabinKit's .vibrant).
+        .background(CabinWindowBackground(.vibrant).ignoresSafeArea())
+        .cabinDesk()
         .onAppear(perform: focusForOpen)
         .onChange(of: model.openToken) { focusForOpen() }
     }
@@ -409,7 +411,7 @@ struct PanelView: View {
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Cabin.mutedForeground)
             .help("Model")
 
             Button {
@@ -417,8 +419,8 @@ struct PanelView: View {
             } label: {
                 Image(systemName: "gearshape")
             }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
+            .buttonStyle(.cabin(.ghost))
+            .foregroundStyle(Cabin.mutedForeground)
             .help("Settings  ⌘,")
         }
     }
@@ -521,18 +523,20 @@ struct PanelView: View {
             } label: {
                 KeyLabel(title: "Cancel", keys: "esc")
             }
+            .buttonStyle(.cabin(.ghost))
             Button {
                 model.commit(.copy)
             } label: {
                 KeyLabel(title: "Copy", keys: "⌘⇧C")
             }
+            .buttonStyle(.cabin)
             .disabled(!model.canCommit)
             Button {
                 model.commit(.replace)
             } label: {
                 KeyLabel(title: model.replaceTitle, keys: "⌘↩")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.cabin(.primary))
             .disabled(!model.canCommit)
         }
         .controlSize(.large)
@@ -542,7 +546,7 @@ struct PanelView: View {
         if let error = model.error {
             Text(error)
                 .font(.system(size: 12))
-                .foregroundStyle(Color.red)
+                .foregroundStyle(Cabin.destructive)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         } else if model.isStreaming {
@@ -562,29 +566,15 @@ struct ModeChip: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .padding(.horizontal, 11)
-                .padding(.vertical, 5)
-                .background(
-                    Capsule().fill(selected ? Color.accentColor : Color.primary.opacity(0.07))
-                )
-                .foregroundStyle(selected ? Color.white : Color.primary)
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .help(help)
+        CabinChip(title, selected: selected, action: action)
+            .help(help)
     }
 }
 
 struct SectionLabel: View {
     let text: String
     var body: some View {
-        Text(text.uppercased())
-            .font(.system(size: 10.5, weight: .semibold))
-            .tracking(0.6)
-            .foregroundStyle(.secondary)
+        CabinLabel(text)
     }
 }
 
@@ -594,21 +584,9 @@ struct KeyLabel: View {
     var body: some View {
         HStack(spacing: 6) {
             Text(title)
-            Text(keys).font(.system(size: 11)).opacity(0.6)
+            CabinKbd(keys, style: .plain)
         }
     }
-}
-
-struct VisualEffect: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .popover
-        view.blendingMode = .behindWindow
-        view.state = .active
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
 /// Read-only, selectable rich text (used for streaming output and the change highlights).
@@ -642,14 +620,8 @@ struct RichText: NSViewRepresentable {
 }
 
 extension View {
+    /// A block of the panel: CabinKit's panel (Desk's 10pt corner and hairline), a little see-through over the vibrancy.
     func card() -> some View {
-        background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(nsColor: .textBackgroundColor).opacity(0.6))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.1))
-        )
+        cabinPanel(fill: Cabin.card.opacity(0.7))
     }
 }

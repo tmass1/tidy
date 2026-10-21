@@ -88,6 +88,7 @@ enum Styled {
         guard !result.isEmpty else { return plain("") }
         guard let chunks = WordDiff.diff(original, result) else { return plain(result) }
         let out = NSMutableAttributedString()
+        var previous: WordDiff.Op?
         for chunk in chunks {
             var attrs = base
             let isBlank = chunk.text.trimmed.isEmpty
@@ -96,15 +97,24 @@ enum Styled {
                 break
             case .del:
                 if isBlank { continue } // a removed line break or space: just leave it out
+                // Cabin's Diff: struck through in muted text on a destructive tint.
                 attrs[.foregroundColor] = NSColor.secondaryLabelColor
                 attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-                attrs[.strikethroughColor] = NSColor.systemRed.withAlphaComponent(0.7)
-                attrs[.backgroundColor] = NSColor.systemRed.withAlphaComponent(0.13)
+                attrs[.strikethroughColor] = Cabin.NS.destructive
+                attrs[.backgroundColor] = Cabin.tint(Cabin.Values.destructiveFill, 0.14)
             case .ins:
+                // Underlined on a success tint, so a change reads without colour too.
                 if !isBlank {
-                    attrs[.backgroundColor] = NSColor.systemGreen.withAlphaComponent(0.22)
+                    attrs[.backgroundColor] = Cabin.tint(Cabin.Values.successFill, 0.22)
+                    attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                    attrs[.underlineColor] = Cabin.NS.success
                 }
             }
+            // A thin space between a removed word and the one that replaced it, so they don't run together.
+            if let previous, previous != chunk.op, previous != .same, chunk.op != .same, !isBlank {
+                out.append(NSAttributedString(string: "\u{2009}", attributes: base))
+            }
+            previous = chunk.op
             out.append(NSAttributedString(string: chunk.text, attributes: attrs))
         }
         return out
