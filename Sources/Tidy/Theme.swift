@@ -21,6 +21,7 @@ enum Theme {
     static let red = dynamic("#a54b56", "#f1afb7")
     static let redWash = dynamic("#f9e9ed", "#472f36")
     static let shadow = dynamic("#27203622", "#00000060")
+    static let popover = dynamic("#f9f8fdf5", "#2c2935f7") // nearly opaque: menus, the voice profile
 
     // Glass surface: 87% paper over a blurred backdrop, a faint diagonal reflection, a fine rim.
     static let glass = dynamic("#fcfcffde", "#26252ede")

@@ -27,7 +27,7 @@ final class PanelController {
         model.onClose = { [weak self] in self?.close() }
         model.onCopy = { [weak self] text in self?.copy(text) }
         model.onReplace = { [weak self] text in self?.replace(text) }
-        model.onOpen = { [weak self] tab in self?.openSettingsClosingPanel(tab) }
+        model.onAllSettings = { [weak self] in self?.openSettingsClosingPanel(.general) }
         model.onHeight = { [weak self] height in self?.fit(height: height) }
     }
 
@@ -161,10 +161,24 @@ final class PanelController {
         let key = (event.charactersIgnoringModifiers ?? "").lowercased()
 
         if event.keyCode == UInt16(kVK_Escape) {
-            close()
+            // Esc steps back: history entry → history list → text → closed.
+            if model.historySelection != nil {
+                model.historySelection = nil
+            } else if model.page != .editor {
+                model.page = .editor
+            } else {
+                close()
+            }
             return true
         }
         guard flags.contains(.command) else { return false }
+        if model.page != .editor {
+            // On History and Settings only editing shortcuts apply.
+            let editing: Set<String> = ["c", "v", "x", "a", "z"]
+            guard flags == .command || flags == [.command, .shift], editing.contains(key) || key == "," || key == "w" else {
+                return true
+            }
+        }
 
         if event.keyCode == UInt16(kVK_Return) || event.keyCode == UInt16(kVK_ANSI_KeypadEnter) {
             model.commit(.replace)
@@ -214,6 +228,7 @@ final class PanelController {
 final class PanelModel: ObservableObject {
     enum ResultView: Hashable { case changes, final }
     enum CommitAction { case replace, copy }
+    enum Page: Hashable { case editor, history, settings }
 
     @Published var original = ""
     @Published var result = ""
@@ -223,6 +238,13 @@ final class PanelModel: ObservableObject {
     @Published var tweak = ""
     @Published var view: ResultView = .final
     @Published var holdingOriginal = false
+    @Published var page: Page = .editor {
+        didSet {
+            holdingOriginal = false
+            if page != .history { historySelection = nil }
+        }
+    }
+    @Published var historySelection: UUID?
     @Published var maxTextHeight: CGFloat = 480
     @Published var openToken = UUID()
 
@@ -235,7 +257,7 @@ final class PanelModel: ObservableObject {
     var onClose: (@MainActor () -> Void)?
     var onCopy: (@MainActor (String) -> Void)?
     var onReplace: (@MainActor (String) -> Void)?
-    var onOpen: (@MainActor (SettingsTab) -> Void)?
+    var onAllSettings: (@MainActor () -> Void)?
     var onHeight: (@MainActor (CGFloat) -> Void)?
 
     init(store: Store) { self.store = store }
@@ -272,6 +294,7 @@ final class PanelModel: ObservableObject {
         tweak = ""
         view = .final
         holdingOriginal = false
+        page = .editor
         sourceApp = source
         self.hadSelection = hadSelection
         modeID = store.modes.first?.id
@@ -299,6 +322,11 @@ final class PanelModel: ObservableObject {
         let base = result.trimmed.isEmpty ? original : result
         tweak = ""
         start(base: base, instruction: Prompts.tweakInstruction(change))
+    }
+
+    /// The title-bar icons: open a page, or go back to the text if it's already open.
+    func togglePage(_ target: Page) {
+        page = (page == target) ? .editor : target
     }
 
     func toggleView() {
@@ -391,14 +419,21 @@ struct PanelView: View {
     var body: some View {
         VStack(spacing: 0) {
             titlebar
-            editorHeader
-            content
-            modes
-            VStack(spacing: 0) {
-                command
-                subfooter
+            switch model.page {
+            case .editor:
+                editorHeader
+                content
+                modes
+                VStack(spacing: 0) {
+                    command
+                    subfooter
+                }
+                .background(Color(Theme.soft))
+            case .history:
+                HistoryPage(model: model, store: store, maxHeight: pageMaxHeight)
+            case .settings:
+                SettingsPage(model: model, store: store, maxHeight: pageMaxHeight)
             }
-            .background(Color(Theme.soft))
         }
         .padding(1) // the surface's 1 pt border sits inside it, as in CSS
         .frame(width: Self.width)
@@ -439,14 +474,21 @@ struct PanelView: View {
                 .padding(.leading, 4)
             }
             Spacer(minLength: 0)
-            IconButton(symbol: "clock.arrow.circlepath", label: "History") { model.onOpen?(.history) }
-            IconButton(symbol: "slider.horizontal.3", label: "Settings") { model.onOpen?(.general) }
+            IconButton(symbol: "clock.arrow.circlepath", label: "History", active: model.page == .history) {
+                model.togglePage(.history)
+            }
+            IconButton(symbol: "slider.horizontal.3", label: "Settings", active: model.page == .settings) {
+                model.togglePage(.settings)
+            }
         }
         .padding(.top, 21)
         .padding(.horizontal, 25)
         .padding(.bottom, 14)
         .background(WindowDragArea())
     }
+
+    /// Pages get the room the editor's text and controls would have used.
+    private var pageMaxHeight: CGFloat { model.maxTextHeight + Self.chromeHeight - 70 }
 
     // Final / Changes, and hold-to-see-original
 
@@ -659,6 +701,7 @@ struct IconButton: View {
     let label: String
     var size: CGFloat = 14
     var box = CGSize(width: 32, height: 32)
+    var active = false
     let action: () -> Void
     @State private var hovering = false
     @Environment(\.isEnabled) private var isEnabled
@@ -669,7 +712,7 @@ struct IconButton: View {
                 .font(.system(size: size))
                 .frame(width: box.width, height: box.height)
                 .background(
-                    RoundedRectangle(cornerRadius: 8).fill(hovering && isEnabled ? Color(Theme.layer) : .clear)
+                    RoundedRectangle(cornerRadius: 8).fill((hovering && isEnabled) || active ? Color(Theme.layer) : .clear)
                 )
                 .contentShape(Rectangle())
         }
@@ -678,6 +721,7 @@ struct IconButton: View {
         .onHover { hovering = $0 }
         .help(label)
         .accessibilityLabel(label)
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
 
