@@ -45,6 +45,7 @@ Sources/Tidy/
   Theme.swift                Lens design tokens: light/dark colors, glass, type metrics (from the UI handoff's CSS)
   Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling, fit-to-content height),
                              PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
+  PanelPages.swift           The panel's History and Settings pages ("Make it yours.")
   SettingsView.swift         Settings window tabs: General, Modes, Voice, History (+ ShortcutRecorder)
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
 ```
@@ -69,13 +70,14 @@ Sources/Tidy/
 | What | Where |
 | --- | --- |
 | API key | Keychain, service `com.tommymassaro.tidy`, account `anthropic-api-key` |
-| model, shortcut, voiceProfile, useVoice, restoreClipboard, voiceUpdatedAt | `UserDefaults` (`com.tommymassaro.tidy`) |
+| model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt | `UserDefaults` (`com.tommymassaro.tidy`) |
 | modes, history (max 500) | JSON in `~/Library/Application Support/Tidy/` |
 
 Voice learning: `HistoryItem.edited` is true when what was sent differs from Claude's suggestion.
 `Store.learnVoice()` sends recent edited pairs, recent drafts, and optional pasted samples to Claude
-and replaces `voiceProfile` with bullet points. When "Match my writing voice" is on, the profile
-is appended to every system prompt.
+and replaces `voiceProfile` with bullet points. It runs on demand (Settings window › Voice) or, when
+"Learn my writing style" (`learnFromEdits`) is on, by itself after three new edited sends. When
+"Write in my voice" (`useVoice`) is on, the profile is appended to every system prompt.
 
 ## Conventions
 
@@ -124,3 +126,7 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - The text is an NSTextView (`ProseView`), not TextEditor, so line height, tracking and the diff's
   rounded highlights (`HighlightLayoutManager`) match the design.
 - Reduce Transparency swaps the glass for an opaque surface.
+- History and Settings are pages inside the panel (`PanelModel.page`); the title-bar icons toggle them
+  and Esc steps back (entry → list → text → closed). The Settings window still exists for everything
+  the panel page doesn't cover (API key, shortcut recorder, modes, clipboard, login item, clearing
+  history). It opens from the menu bar, ⌘, and the page's "All settings…" link.

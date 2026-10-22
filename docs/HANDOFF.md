@@ -45,8 +45,10 @@ _Updated October 21, 2026._
   (multi-paragraph diff), hold for original, streaming, empty draft, error, long text (caps and scrolls),
   short text, another mode selected. Not yet checked on screen: glass over a real desktop, corners and
   shadow, dragging, keyboard focus, the hold gesture, Reduce Transparency.
-- Open decision: the Lens design has History and Settings as pages inside the panel. For now the two
-  title-bar icons close the panel and open the Settings window on that tab.
+- History and Settings are pages inside the panel, as in the Lens design (rendered and checked in
+  light and dark: list, entry, empty, settings with and without a voice profile). "Learn my writing
+  style" is a new setting: when on, three new edited sends update the voice profile automatically.
+  The page adds an "All settings…" link to the Settings window, which isn't in the mock.
 - **Core-loop QA hasn't started.** Nothing in the QA checklist below has been verified on a Mac yet.
 
 ## First tasks, in order
@@ -88,6 +90,9 @@ Panel
 - [ ] Error states read well: no key, bad key (401), offline, and an empty selection
 - [ ] Panel fits its text (grows downward, long text scrolls), drags by its title bar, opens on the screen with the mouse
 - [ ] Glass reads well over light and dark desktops; corners and shadow look right; Reduce Transparency gives an opaque panel
+- [ ] History page: search filters as you type, an entry opens and its text can be copied, Esc goes back a step
+- [ ] Settings page: the model menu changes the model used next; both checkboxes persist after relaunch; "All settings…" opens the window
+- [ ] With "Learn my writing style" on, three edited sends update the voice profile on their own
 
 Settings
 - [ ] Shortcut recorder: record ⌃⌥C, then it works globally; Esc cancels recording; Reset restores ⌥⌘C
