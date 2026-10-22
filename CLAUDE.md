@@ -36,7 +36,7 @@ Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tomm
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
   TidyApp.swift              @main entry, String helpers (trimmed, wordCount, firstLine)
-  AppDelegate.swift          status item + menu, hotkey → trigger(), settings window, hidden Edit menu
+  AppDelegate.swift          status item + menu, hotkey → trigger(), settings window (GlassWindow), hidden Edit/Window menus
   HotKey.swift               Shortcut model (Carbon keycodes/modifiers) + HotKeyCenter (RegisterEventHotKey)
   Selection.swift            Accessibility check; copySelection() sends ⌘C; paste() sends ⌘V; clipboard snapshot/restore
   Claude.swift               model list + streaming client (AsyncThrowingStream<String>)
@@ -46,7 +46,7 @@ Sources/Tidy/
   Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling, fit-to-content height),
                              PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
   PanelPages.swift           The panel's History and Settings pages ("Make it yours.")
-  SettingsView.swift         Settings window tabs: General, Modes, Voice, History (+ ShortcutRecorder)
+  SettingsView.swift         Settings window in the Lens style: General, Modes, Voice, History (+ ShortcutRecorder)
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
 ```
 
@@ -129,7 +129,10 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - History and Settings are pages inside the panel (`PanelModel.page`); the title-bar icons toggle them
   and Esc steps back (entry → list → text → closed). The Settings window still exists for everything
   the panel page doesn't cover (API key, shortcut recorder, modes, clipboard, login item, clearing
-  history). It opens from the menu bar, ⌘, and the page's "All settings…" link.
+  history). It opens from the menu bar, ⌘, and the page's "All settings…" link. It uses the same Lens
+  language (borderless `GlassWindow`, wordmark, underline tabs, `SettingRow`/`CheckboxRow`, `LensField`,
+  `LensButton`); there's no mock for it, so it's built from the panel's parts. Shared parts live in
+  `PanelPages.swift`.
 - Closing: Esc, ⌘W, ⌥⌘C again, the × in the title bar, or a click anywhere outside the panel (a
   global mouse monitor, installed only while the panel is open). The × isn't in the Lens mock; it
   was added at Tommy's request.

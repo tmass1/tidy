@@ -6,26 +6,86 @@ import SwiftUI
 
 enum SettingsTab: Hashable { case general, modes, voice, history }
 
+/// The Settings window, in the same Lens language as the panel: a glass surface, the wordmark,
+/// underline tabs, ruled rows. The panel's "Make it yours." page covers the everyday settings;
+/// this window has the rest.
 struct SettingsView: View {
+    static let size = CGSize(width: 760, height: 620)
+
     @ObservedObject var store: Store
+    var close: () -> Void = {}
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    init(store: Store, close: @escaping () -> Void = {}) {
+        self.store = store
+        self.close = close
+    }
 
     var body: some View {
-        TabView(selection: $store.settingsTab) {
-            GeneralTab(store: store)
-                .tabItem { Label("General", systemImage: "gearshape") }
-                .tag(SettingsTab.general)
-            ModesTab(store: store)
-                .tabItem { Label("Modes", systemImage: "slider.horizontal.3") }
-                .tag(SettingsTab.modes)
-            VoiceTab(store: store)
-                .tabItem { Label("Voice", systemImage: "person.wave.2") }
-                .tag(SettingsTab.voice)
-            HistoryTab(store: store)
-                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
-                .tag(SettingsTab.history)
+        VStack(spacing: 0) {
+            titlebar
+            tabs
+            Group {
+                switch store.settingsTab {
+                case .general: GeneralTab(store: store)
+                case .modes: ModesTab(store: store)
+                case .voice: VoiceTab(store: store)
+                case .history: HistoryTab(store: store)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .padding(16)
-        .frame(minWidth: 720, minHeight: 540)
+        .padding(1) // the surface's 1 pt border sits inside it, as in the panel
+        .frame(width: Self.size.width, height: Self.size.height)
+        .background(Glass(reduceTransparency: reduceTransparency))
+        .clipShape(RoundedRectangle(cornerRadius: Glass.radius))
+        .foregroundStyle(Color(Theme.ink))
+        .font(.system(size: 13))
+    }
+
+    private var titlebar: some View {
+        HStack(spacing: 14) {
+            Wordmark()
+            Text("Settings")
+                .font(.system(size: 12))
+                .foregroundStyle(Color(Theme.muted))
+                .lineBox(12)
+                .padding(.leading, 17)
+                .overlay(alignment: .leading) {
+                    Rectangle().fill(Color(Theme.rule)).frame(width: 1, height: 18)
+                }
+                .padding(.leading, 4)
+            Spacer(minLength: 0)
+            IconButton(symbol: "xmark", label: "Close  ⌘W", size: 13, action: close)
+                .accessibilityLabel("Close")
+        }
+        .padding(.top, 21)
+        .padding(.horizontal, 25)
+        .padding(.bottom, 14)
+        .background(WindowDragArea())
+    }
+
+    private var tabs: some View {
+        HStack(spacing: 15) {
+            tab("General", .general)
+            tab("Modes", .modes)
+            tab("Voice", .voice)
+            tab("History", .history)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 12)
+        .padding(.horizontal, 31)
+    }
+
+    private func tab(_ title: String, _ value: SettingsTab) -> some View {
+        ViewTab(title: title, selected: store.settingsTab == value) { store.settingsTab = value }
+    }
+}
+
+/// Tab content padding, matching the panel's text area.
+private extension View {
+    func tabPadding() -> some View {
+        padding(EdgeInsets(top: 25, leading: 33, bottom: 26, trailing: 33))
     }
 }
 
@@ -38,69 +98,94 @@ struct GeneralTab: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
-        Form {
-            Section("Anthropic API key") {
-                HStack {
-                    SecureField(store.hasAPIKey ? "Saved in your Keychain. Paste a new key to replace it." : "sk-ant-…", text: $keyDraft)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit(saveKey)
-                    Button("Save", action: saveKey)
-                        .disabled(keyDraft.trimmed.isEmpty)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                apiKey
+                SettingRow(title: "Writing model", detail: "Use for your next cleanup.") {
+                    ModelMenu(store: store)
                 }
-                HStack(spacing: 6) {
-                    Image(systemName: store.hasAPIKey ? "checkmark.circle.fill" : "exclamationmark.circle")
-                        .foregroundStyle(store.hasAPIKey ? Color.green : Color.orange)
-                    Text(store.hasAPIKey ? "Key saved" : "No key yet")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Link("Create a key at console.anthropic.com", destination: URL(string: "https://console.anthropic.com/settings/keys")!)
-                }
-                .font(.callout)
-            }
-
-            Section("Model") {
-                Picker("Model", selection: $store.model) {
-                    ForEach(Claude.models) { option in
-                        Text(option.name).tag(option.id)
-                    }
-                }
-            }
-
-            Section("Shortcut") {
-                LabeledContent("Clean up selection") {
+                SettingRow(
+                    title: "Clean up selection",
+                    detail: store.hotKeyRegistered
+                        ? "Select your text, then press the shortcut."
+                        : "Another app already uses that shortcut (Hammerspoon, maybe). Pick a different one.",
+                    detailIsError: !store.hotKeyRegistered
+                ) {
                     ShortcutRecorder(store: store)
                 }
-                if !store.hotKeyRegistered {
-                    Text("Another app already uses that shortcut (Hammerspoon, maybe). Pick a different one.")
-                        .font(.callout)
-                        .foregroundStyle(Color.orange)
-                }
-            }
-
-            Section("Permissions & startup") {
-                LabeledContent("Accessibility") {
+                SettingRow(title: "Accessibility") {
                     if trusted {
-                        Label("Allowed", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(Color.green)
+                        StatusDot(text: "Allowed")
                     } else {
-                        Button("Open System Settings…") { Selection.openAccessibilitySettings() }
+                        LensButton(title: "Open System Settings…") { Selection.openAccessibilitySettings() }
                     }
                 }
-                Toggle("Open Tidy at login", isOn: $launchAtLogin)
+                CheckboxRow(title: "Open Tidy at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, on in store.setLaunchAtLogin(on) }
-                Toggle("Put my clipboard back after pasting", isOn: $store.restoreClipboard)
+                CheckboxRow(title: "Put my clipboard back after pasting", isOn: $store.restoreClipboard)
             }
+            .tabPadding()
         }
-        .formStyle(.grouped)
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             trusted = Selection.isTrusted(prompt: false)
         }
+    }
+
+    private var apiKey: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Anthropic API key").lineBox(13)
+                Text(store.hasAPIKey ? "Saved in your Keychain. Paste a new key to replace it." : "No key yet")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(Theme.muted))
+                    .lineBox(12)
+            }
+            HStack(alignment: .center, spacing: 12) {
+                LensField(placeholder: store.hasAPIKey ? "Paste a new key" : "sk-ant-…", text: $keyDraft, secure: true)
+                    .onSubmit(saveKey)
+                LensButton(title: "Save", prominent: true, action: saveKey)
+                    .disabled(keyDraft.trimmed.isEmpty)
+            }
+            HStack {
+                if store.hasAPIKey {
+                    StatusDot(text: "Key saved")
+                } else {
+                    StatusDot(text: "No key yet", isError: true)
+                }
+                Spacer()
+                Link("Create a key at console.anthropic.com", destination: URL(string: "https://console.anthropic.com/settings/keys")!)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(Theme.accent))
+            }
+        }
+        .padding(.bottom, 16)
+        .padding(.bottom, 1)
+        .overlay(alignment: .bottom) { Rule() }
     }
 
     private func saveKey() {
         guard !keyDraft.trimmed.isEmpty else { return }
         store.setAPIKey(keyDraft)
         keyDraft = ""
+    }
+}
+
+/// The status line's small dot and text, as in the panel's footer.
+struct StatusDot: View {
+    let text: String
+    var isError = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(Color(isError ? Theme.red : Theme.green))
+                .frame(width: 4, height: 4)
+            Text(text)
+                .font(.system(size: 12))
+                .foregroundStyle(Color(isError ? Theme.red : Theme.muted))
+                .lineBox(12)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -111,17 +196,29 @@ struct ShortcutRecorder: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            if recording {
+                Text("esc cancels")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(Theme.muted))
+            } else if store.shortcut != .defaultCleanup {
+                SmallButton(title: "Reset") { store.shortcut = .defaultCleanup }
+            }
             Button(action: toggle) {
                 Text(recording ? "Press a shortcut…" : store.shortcut.display)
                     .font(.system(size: 13, weight: .medium))
-                    .frame(minWidth: 120)
+                    .lineBox(13)
+                    .frame(minWidth: 110)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .foregroundStyle(Color(recording ? Theme.accent : Theme.ink))
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(recording ? Theme.accentSoft : Theme.layer))
+                    )
+                    .contentShape(Rectangle())
             }
-            if recording {
-                Text("esc cancels").font(.caption).foregroundStyle(.secondary)
-            } else if store.shortcut != .defaultCleanup {
-                Button("Reset") { store.shortcut = .defaultCleanup }
-                    .buttonStyle(.link)
-            }
+            .buttonStyle(BareButtonStyle())
+            .help("Click, then press the new shortcut")
         }
         .onDisappear(perform: stop)
     }
@@ -171,68 +268,73 @@ struct ModesTab: View {
     @State private var selection: UUID?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 0) {
-                List(selection: $selection) {
+        HStack(alignment: .top, spacing: 24) {
+            VStack(alignment: .leading, spacing: 8) {
+                List {
                     ForEach(Array(store.modes.enumerated()), id: \.element.id) { index, mode in
-                        HStack {
-                            Text(mode.name)
-                            Spacer()
-                            if index < 9 {
-                                Text("⌘\(index + 1)").font(.caption).foregroundStyle(.secondary)
-                            }
+                        ModeListRow(
+                            name: mode.name,
+                            shortcut: index < 9 ? "⌘\(index + 1)" : nil,
+                            selected: mode.id == selection
+                        ) {
+                            selection = mode.id
                         }
-                        .tag(mode.id)
+                        .listRowInsets(EdgeInsets(top: 1, leading: 0, bottom: 1, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                     .onMove { from, to in store.modes.move(fromOffsets: from, toOffset: to) }
                 }
-                Divider()
-                HStack(spacing: 4) {
-                    Button(action: addMode) { Image(systemName: "plus") }
-                        .help("Add a mode")
-                    Button(action: removeMode) { Image(systemName: "minus") }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                HStack(spacing: 2) {
+                    IconButton(symbol: "plus", label: "Add a mode", size: 13, action: addMode)
+                    IconButton(symbol: "minus", label: "Remove the selected mode", size: 13, action: removeMode)
                         .disabled(selection == nil || store.modes.count <= 1)
-                        .help("Remove the selected mode")
                     Spacer()
-                    Button("Reset to defaults") {
+                    SmallButton(title: "Reset to defaults") {
                         store.modes = Mode.defaults
                         selection = store.modes.first?.id
                     }
+                    .padding(.trailing, -9)
                 }
-                .buttonStyle(.borderless)
-                .padding(8)
             }
-            .frame(width: 230)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.1)))
+            .frame(width: 220)
+            .padding(.trailing, 24)
+            .overlay(alignment: .trailing) {
+                Rectangle().fill(Color(Theme.rule)).frame(width: 1)
+            }
 
             if let id = selection, store.modes.contains(where: { $0.id == id }) {
                 let mode = binding(for: id)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Name").font(.headline)
-                    TextField("Name", text: mode.name)
-                        .textFieldStyle(.roundedBorder)
-                    Text("What Claude should do").font(.headline).padding(.top, 6)
+                VStack(alignment: .leading, spacing: 0) {
+                    Caption(text: "Name")
+                    LensField(placeholder: "Name", text: mode.name)
+                    Caption(text: "What Claude should do")
+                        .padding(.top, 22)
+                        .padding(.bottom, 7)
                     TextEditor(text: mode.instruction)
                         .font(.system(size: 13))
-                        .padding(6)
-                        .frame(minHeight: 160)
-                        .background(Color(nsColor: .textBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.12)))
+                        .lineSpacing(4)
+                        .scrollContentBackground(.hidden)
+                        .padding(10)
+                        .frame(minHeight: 180)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color(Theme.layer)))
                     Text("Be specific, for example: “Reply to a client. Confident and warm, under 120 words, end with a clear next step.” Drag modes in the list to reorder; the first one runs by default, and ⌘1–9 switch between them in the panel.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(Theme.muted))
+                        .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
-                    Spacer()
+                        .padding(.top, 12)
+                    Spacer(minLength: 0)
                 }
             } else {
                 Text("Select a mode to edit it.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color(Theme.muted))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .tabPadding()
         .onAppear {
             if selection == nil { selection = store.modes.first?.id }
         }
@@ -262,6 +364,38 @@ struct ModesTab: View {
     }
 }
 
+/// A mode in the list: lavender when selected, like the panel's mode strip.
+private struct ModeListRow: View {
+    let name: String
+    let shortcut: String?
+    let selected: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        HStack {
+            Text(name).lineLimit(1)
+            Spacer(minLength: 8)
+            if let shortcut {
+                Text(shortcut).font(.system(size: 11)).opacity(0.6)
+            }
+        }
+        .lineBox(13)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .foregroundStyle(Color(selected ? Theme.accent : Theme.ink))
+        .background(
+            RoundedRectangle(cornerRadius: 7)
+                .fill(selected ? Color(Theme.accentSoft) : hovering ? Color(Theme.layer) : .clear)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture(perform: action)
+        .onHover { hovering = $0 }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+    }
+}
+
 // MARK: - Voice
 
 struct VoiceTab: View {
@@ -271,44 +405,68 @@ struct VoiceTab: View {
     @State private var message: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Toggle("Match my writing voice", isOn: $store.useVoice)
-            Text("Tidy keeps a short profile of how you write and sends it with every cleanup. It learns from the changes you make to a suggestion before you send it, and from messages you paste below. You can also edit the profile directly.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                CheckboxRow(
+                    title: "Write in my voice", detail: "Use my style profile in new cleanups.",
+                    isOn: $store.useVoice
+                )
+                CheckboxRow(
+                    title: "Learn my writing style", detail: "Notice the edits I make before replacing.",
+                    isOn: $store.learnFromEdits
+                )
+                Text("Tidy keeps a short profile of how you write and sends it with every cleanup. It learns from the changes you make to a suggestion before you send it, and from messages you paste below. You can also edit the profile directly.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(Theme.muted))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 16)
 
-            Text("Your voice profile").font(.headline).padding(.top, 4)
-            box(TextEditor(text: $store.voiceProfile), minHeight: 140)
+                Caption(text: "Your voice profile")
+                    .padding(.top, 22)
+                    .padding(.bottom, 7)
+                TextEditor(text: $store.voiceProfile)
+                    .font(.system(size: 13))
+                    .lineSpacing(13 * 0.7 - 3) // CSS line-height 1.7, like the panel's profile
+                    .scrollContentBackground(.hidden)
+                    .padding(.vertical, 6)
+                    .padding(.leading, 15)
+                    .frame(minHeight: 140)
+                    .background(Color(Theme.popover))
+                    .overlay(alignment: .leading) {
+                        Rectangle().fill(Color(Theme.accent)).frame(width: 2)
+                    }
 
-            HStack {
-                let count = store.editsSinceVoiceUpdate.count
-                Button(count == 1 ? "Update from 1 new edit" : "Update from \(count) new edits") {
-                    learn(samples: nil)
+                HStack(spacing: 10) {
+                    let count = store.editsSinceVoiceUpdate.count
+                    LensButton(title: count == 1 ? "Update from 1 new edit" : "Update from \(count) new edits") {
+                        learn(samples: nil)
+                    }
+                    .disabled(busy || count == 0 || !store.hasAPIKey)
+                    if busy { ProgressView().controlSize(.small) }
+                    Spacer()
+                    if let message {
+                        Text(message).font(.system(size: 12)).foregroundStyle(Color(Theme.muted))
+                    }
                 }
-                .disabled(busy || count == 0 || !store.hasAPIKey)
-                if busy { ProgressView().controlSize(.small) }
-                Spacer()
-                if let message {
-                    Text(message).font(.callout).foregroundStyle(.secondary)
-                }
+                .padding(.top, 12)
+
+                Caption(text: "Or paste a few messages you’ve written")
+                    .padding(.top, 26)
+                    .padding(.bottom, 7)
+                TextEditor(text: $samples)
+                    .font(.system(size: 13))
+                    .lineSpacing(4)
+                    .scrollContentBackground(.hidden)
+                    .padding(10)
+                    .frame(minHeight: 90)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color(Theme.layer)))
+                LensButton(title: "Learn from these") { learn(samples: samples) }
+                    .disabled(busy || samples.trimmed.isEmpty || !store.hasAPIKey)
+                    .padding(.top, 12)
             }
-
-            Text("Or paste a few messages you’ve written").font(.headline).padding(.top, 6)
-            box(TextEditor(text: $samples), minHeight: 90)
-            Button("Learn from these") { learn(samples: samples) }
-                .disabled(busy || samples.trimmed.isEmpty || !store.hasAPIKey)
+            .tabPadding()
         }
-    }
-
-    private func box<V: View>(_ content: V, minHeight: CGFloat) -> some View {
-        content
-            .font(.system(size: 13))
-            .padding(6)
-            .frame(minHeight: minHeight)
-            .background(Color(nsColor: .textBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.12)))
     }
 
     private func learn(samples pasted: String?) {
@@ -333,7 +491,6 @@ struct HistoryTab: View {
     @ObservedObject var store: Store
     @State private var query = ""
     @State private var selection: UUID?
-    @State private var confirmClear = false
 
     private var filtered: [HistoryItem] {
         let q = query.trimmed
@@ -345,85 +502,127 @@ struct HistoryTab: View {
 
     var body: some View {
         if store.history.isEmpty {
-            VStack(spacing: 8) {
-                Image(systemName: "clock.arrow.circlepath").font(.largeTitle).foregroundStyle(.tertiary)
-                Text("Nothing here yet").font(.headline)
-                Text("Messages you replace or copy from the panel show up here.")
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Text("Nothing here yet. Cleanups you replace or copy show up here.")
+                .font(.system(size: 12))
+                .foregroundStyle(Color(Theme.muted))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            HStack(alignment: .top, spacing: 16) {
-                VStack(spacing: 8) {
-                    TextField("Search", text: $query)
-                        .textFieldStyle(.roundedBorder)
-                    List(filtered, selection: $selection) { item in
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(item.sent.firstLine).lineLimit(1)
-                            HStack(spacing: 6) {
-                                Text(item.date.formatted(date: .abbreviated, time: .shortened))
-                                if let app = item.app { Text("· \(app)") }
-                                if item.edited { Text("· edited") }
+            HStack(alignment: .top, spacing: 24) {
+                VStack(alignment: .leading, spacing: 0) {
+                    LensField(placeholder: "Find something you wrote", text: $query)
+                        .padding(.bottom, 8)
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(filtered) { item in
+                                CompactHistoryRow(item: item, selected: item.id == selection) {
+                                    selection = item.id
+                                }
                             }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, -9) // text lines up with the search field; fills overhang
                     }
                     HStack {
-                        Text("\(store.history.count) saved").font(.caption).foregroundStyle(.secondary)
+                        Text("\(store.history.count) saved")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(Theme.muted))
                         Spacer()
-                        Button("Clear History…") { confirmClear = true }
+                        SmallButton(title: "Clear history…", action: confirmClear)
+                            .padding(.trailing, -9)
                     }
+                    .padding(.top, 8)
                 }
-                .frame(width: 280)
+                .frame(width: 260)
+                .padding(.trailing, 24)
+                .overlay(alignment: .trailing) {
+                    Rectangle().fill(Color(Theme.rule)).frame(width: 1)
+                }
 
                 if let item = store.history.first(where: { $0.id == selection }) {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("\(item.date.formatted(date: .complete, time: .shortened))\(item.app.map { " · \($0)" } ?? "") · \(item.mode)")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Caption(text: "\(HistoryPage.caption(for: item)) · \(item.mode)")
                             block("Sent", item.sent)
                             if item.edited { block("Claude suggested", item.suggestion) }
                             block("Your draft", item.original)
                         }
-                        .padding(.trailing, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 } else {
                     Text("Select a message.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(Theme.muted))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .confirmationDialog("Clear all history?", isPresented: $confirmClear) {
-                Button("Clear History", role: .destructive) {
-                    store.history = []
-                    selection = nil
-                }
-            } message: {
-                Text("This removes every saved message. Your voice profile stays.")
-            }
+            .tabPadding()
         }
     }
 
     private func block(_ title: String, _ text: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(title).font(.headline)
+                Caption(text: title)
                 Spacer()
-                Button("Copy") {
+                SmallButton(title: "Copy") {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(text, forType: .string)
                 }
-                .buttonStyle(.link)
+                .padding(.trailing, -9)
             }
             Text(text)
+                .font(.system(size: 15))
+                .lineSpacing(15 * 0.7 - 3) // CSS line-height 1.7
                 .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
-                .background(Color(nsColor: .textBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
         }
+        .padding(.top, 22)
+    }
+
+    private func confirmClear() {
+        let alert = NSAlert()
+        alert.messageText = "Clear all history?"
+        alert.informativeText = "This removes every saved message. Your voice profile stays."
+        let clear = alert.addButton(withTitle: "Clear History")
+        clear.hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            store.history = []
+            selection = nil
+        }
+    }
+}
+
+/// A history entry in the list: when and where, then the first line.
+private struct CompactHistoryRow: View {
+    let item: HistoryItem
+    let selected: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(HistoryPage.caption(for: item) + (item.edited ? " · edited" : ""))
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(Theme.muted))
+                    .lineBox(11)
+                Text(HistoryPage.titleAndSnippet(item.sent).title)
+                    .font(Font(NSFont.systemFont(ofSize: 13, weight: .medium) as CTFont))
+                    .lineLimit(1)
+                    .lineBox(13)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(selected || hovering ? Color(Theme.layer) : .clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(BareButtonStyle())
+        .onHover { hovering = $0 }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

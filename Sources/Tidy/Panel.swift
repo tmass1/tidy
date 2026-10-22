@@ -467,11 +467,7 @@ struct PanelView: View {
 
     private var titlebar: some View {
         HStack(spacing: 14) {
-            Text("tidy")
-                .font(Font(NSFont.systemFont(ofSize: 21, weight: Theme.brandWeight) as CTFont))
-                .tracking(-1)
-                .lineBox(21)
-                .accessibilityLabel("Tidy")
+            Wordmark()
             if let name = model.sourceName {
                 HStack(spacing: 6) {
                     Image(systemName: Self.symbol(for: model.sourceApp?.bundleIdentifier))

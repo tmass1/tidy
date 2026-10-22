@@ -170,7 +170,7 @@ struct SettingsPage: View {
             BackButton(title: "Back to text") { model.page = .editor }
             PageTitle(text: "Make it yours.")
             SettingRow(title: "Writing model", detail: "Use for your next cleanup.") {
-                modelMenu
+                ModelMenu(store: store)
             }
             SettingRow(title: "Open from any app", detail: "Select your text, then press the shortcut.") {
                 Text(store.shortcut.display)
@@ -192,7 +192,34 @@ struct SettingsPage: View {
         }
     }
 
-    private var modelMenu: some View {
+    private var profile: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("Your voice profile")
+                .font(.system(size: 11))
+                .foregroundStyle(Color(Theme.muted))
+                .frame(minHeight: 11 * 1.7)
+            Text(store.voiceProfile.trimmed.isEmpty ? "Nothing learned yet." : store.voiceProfile)
+                .lineSpacing(13 * 0.7 - 3) // CSS line-height 1.7
+                .foregroundStyle(Color(store.voiceProfile.trimmed.isEmpty ? Theme.muted : Theme.ink))
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 3) // half the 1.7 line-height's leading, above and below
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 15)
+        .background(Color(Theme.popover))
+        .overlay(alignment: .leading) {
+            Rectangle().fill(Color(Theme.accent)).frame(width: 2)
+        }
+        .padding(.top, 22)
+    }
+}
+
+/// The model choice: a quiet menu showing "Sonnet 5.5", with the full names inside.
+struct ModelMenu: View {
+    @ObservedObject var store: Store
+
+    var body: some View {
         Menu {
             ForEach(Claude.models) { option in
                 Button {
@@ -220,43 +247,26 @@ struct SettingsPage: View {
         let name = Claude.models.first { $0.id == id }?.name ?? id
         return name.components(separatedBy: " · ").first ?? name
     }
-
-    private var profile: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("Your voice profile")
-                .font(.system(size: 11))
-                .foregroundStyle(Color(Theme.muted))
-                .frame(minHeight: 11 * 1.7)
-            Text(store.voiceProfile.trimmed.isEmpty ? "Nothing learned yet." : store.voiceProfile)
-                .lineSpacing(13 * 0.7 - 3) // CSS line-height 1.7
-                .foregroundStyle(Color(store.voiceProfile.trimmed.isEmpty ? Theme.muted : Theme.ink))
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.vertical, 3) // half the 1.7 line-height's leading, above and below
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, 15)
-        .background(Color(Theme.popover))
-        .overlay(alignment: .leading) {
-            Rectangle().fill(Color(Theme.accent)).frame(width: 2)
-        }
-        .padding(.top, 22)
-    }
 }
 
-private struct SettingRow<Control: View>: View {
+/// A settings row: title and muted detail on the left, a control on the right, a rule below.
+struct SettingRow<Control: View>: View {
     let title: String
-    let detail: String
+    var detail: String?
+    var detailIsError = false
     @ViewBuilder let control: Control
 
     var body: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).lineBox(13)
-                Text(detail)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(Theme.muted))
-                    .lineBox(12)
+                if let detail {
+                    Text(detail)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(detailIsError ? Theme.red : Theme.muted))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineBox(12)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             control
@@ -267,9 +277,9 @@ private struct SettingRow<Control: View>: View {
     }
 }
 
-private struct CheckboxRow: View {
+struct CheckboxRow: View {
     let title: String
-    let detail: String
+    var detail: String?
     @Binding var isOn: Bool
 
     var body: some View {
@@ -387,8 +397,88 @@ struct SmallButton: View {
     }
 }
 
-private struct Rule: View {
+struct Rule: View {
     var body: some View {
         Rectangle().fill(Color(Theme.rule)).frame(height: 1)
+    }
+}
+
+/// The lower-case "tidy" wordmark: 21 pt, weight 650, tracking −1.
+struct Wordmark: View {
+    var body: some View {
+        Text("tidy")
+            .font(Font(NSFont.systemFont(ofSize: 21, weight: Theme.brandWeight) as CTFont))
+            .tracking(-1)
+            .lineBox(21)
+            .accessibilityLabel("Tidy")
+    }
+}
+
+/// Muted 11 pt label above a field or block, like the design's detail labels.
+struct Caption: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 11))
+            .foregroundStyle(Color(Theme.muted))
+            .lineBox(11)
+    }
+}
+
+/// A borderless text field with a hairline underneath that turns lavender while focused.
+struct LensField: View {
+    let placeholder: String
+    @Binding var text: String
+    var secure = false
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Group {
+            if secure {
+                SecureField(placeholder, text: $text, prompt: prompt)
+            } else {
+                TextField(placeholder, text: $text, prompt: prompt)
+            }
+        }
+        .textFieldStyle(.plain)
+        .focused($focused)
+        .lineBox(13)
+        .padding(.vertical, 8)
+        .padding(.bottom, 1)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color(focused ? Theme.accent : Theme.rule)).frame(height: 1)
+        }
+    }
+
+    private var prompt: Text { Text(placeholder).foregroundColor(Color(Theme.muted)) }
+}
+
+/// A compact text button. Prominent uses the replace action's colors (dark in light mode,
+/// pale in dark mode); otherwise a quiet tinted fill.
+struct LensButton: View {
+    let title: String
+    var prominent = false
+    let action: () -> Void
+    @State private var hovering = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(Font(NSFont.systemFont(ofSize: 12, weight: Theme.actionWeight) as CTFont))
+                .lineBox(12)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 6)
+                .foregroundStyle(Color(prominent ? Theme.onAction : Theme.ink))
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color(prominent ? Theme.action : Theme.layer))
+                        .brightness(hovering && isEnabled ? 0.04 : 0)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(BareButtonStyle())
+        .opacity(isEnabled ? 1 : 0.5)
+        .onHover { hovering = $0 }
     }
 }

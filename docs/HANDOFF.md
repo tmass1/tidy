@@ -49,6 +49,9 @@ _Updated October 21, 2026._
   light and dark: list, entry, empty, settings with and without a voice profile). "Learn my writing
   style" is a new setting: when on, three new edited sends update the voice profile automatically.
   The page adds an "All settings…" link to the Settings window, which isn't in the mock.
+- The Settings window now matches the panel (glass, wordmark, underline tabs, ruled rows, lavender
+  checkboxes). No mock exists for it; it reuses the panel's components. Rendered in light and dark.
+  The panel closes on a × or a click outside it, as Tommy asked.
 - **Core-loop QA hasn't started.** Nothing in the QA checklist below has been verified on a Mac yet.
 
 ## First tasks, in order

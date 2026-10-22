@@ -106,15 +106,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func showSettings(_ tab: SettingsTab) {
         store.settingsTab = tab
         if settingsWindow == nil {
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 760, height: 580),
-                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            // Borderless glass, like the panel, but a normal window: it activates Tidy and
+            // takes part in ⌘W and Mission Control.
+            let window = GlassWindow(
+                contentRect: NSRect(origin: .zero, size: SettingsView.size),
+                styleMask: [.borderless, .closable, .miniaturizable],
                 backing: .buffered, defer: false
             )
-            window.title = "Tidy"
+            window.title = "Tidy Settings"
             window.isReleasedWhenClosed = false
-            window.contentViewController = NSHostingController(rootView: SettingsView(store: store))
-            window.setContentSize(NSSize(width: 760, height: 580))
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.hasShadow = true
+            window.contentView = NSHostingView(rootView: SettingsView(store: store) { [weak window] in
+                window?.performClose(nil)
+            })
             window.center()
             settingsWindow = window
         }
@@ -143,6 +149,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         editItem.submenu = edit
         main.addItem(editItem)
 
+        let windowItem = NSMenuItem()
+        let windowMenu = NSMenu(title: "Window")
+        windowMenu.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windowItem.submenu = windowMenu
+        main.addItem(windowItem)
+
         NSApp.mainMenu = main
     }
+}
+
+/// A borderless window that still behaves like a normal one: it can be key and main, and
+/// ⌘W / the × close it (performClose would otherwise beep without a title-bar close button).
+final class GlassWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+    override func performClose(_ sender: Any?) { close() }
 }
