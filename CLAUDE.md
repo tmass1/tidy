@@ -42,7 +42,9 @@ Sources/Tidy/
   Claude.swift               model list + streaming client (AsyncThrowingStream<String>)
   Prompts.swift              system/user prompts, tweak instruction, output cleanup, voice-learning prompt
   Diff.swift                 WordDiff (LCS over word/whitespace tokens) + Styled (NSAttributedString for the panel)
-  Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling), PanelModel, PanelView + small views
+  Theme.swift                Lens design tokens: light/dark colors, glass, type metrics (from the UI handoff's CSS)
+  Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling, fit-to-content height),
+                             PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
   SettingsView.swift         Settings window tabs: General, Modes, Voice, History (+ ShortcutRecorder)
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
 ```
@@ -57,7 +59,8 @@ Sources/Tidy/
    The source app stays the active app, which is what makes paste-back work.
 4. `PanelModel.start()` streams from `Claude.stream`; `Prompts.clean(_, streaming: true)` strips
    wrapper tags and fences as text arrives.
-5. When it finishes, the result shows as a diff (`Styled.diff`) or as an editable TextEditor (the "Final" tab).
+5. Text streams into the Final view. When it finishes, Final is editable and Changes shows the diff
+   (`Styled.diff`); holding "Hold for original" (or Space on it) shows the draft.
 6. ⌘↩ → `PanelModel.commit(.replace)` saves a HistoryItem → `PanelController.replace()` closes the
    panel, makes sure the source app is frontmost, then `Selection.paste()` posts ⌘V and restores the clipboard.
 
@@ -107,3 +110,17 @@ is appended to every system prompt.
 - The app has no visible main menu, but `AppDelegate.installMainMenu()` must stay: it's what gives
   text fields their Edit commands.
 - Don't make the panel activating. A normal activating window breaks returning focus to the source app.
+
+## Panel design (Lens)
+
+The panel implements the approved **Lens** design (light and dark, subtle glass). The source of truth is
+the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, `source/latest/styles.css`,
+`glass-finish.css`). Margin and Compare in that package are alternatives, not built.
+
+- CSS px map 1:1 to points. Colors live only in `Theme`; don't hardcode new ones in views.
+- CSS gives text a 1.5x line box; `lineBox(_:)` reproduces it. Without it rows come out short.
+- The panel is borderless (24 pt corners, glass in `Glass`), 602 pt wide, and its height follows the
+  content (`PanelHeightKey` → `PanelController.fit`), growing downward with the top edge fixed.
+- The text is an NSTextView (`ProseView`), not TextEditor, so line height, tracking and the diff's
+  rounded highlights (`HighlightLayoutManager`) match the design.
+- Reduce Transparency swaps the glass for an opaque surface.

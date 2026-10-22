@@ -24,7 +24,7 @@ Hammerspoon script (`~/.hammerspoon/cleanup.lua`). He wanted something better be
 | Features | Streaming + inline word diff, custom modes, searchable history, learns his writing voice |
 
 Defaults chosen during implementation, all open to change:
-- Panel UI: Spotlight-style non-activating floating panel. The Changes tab is the default view, and Final is the editable text.
+- Panel UI: Spotlight-style non-activating floating panel in the **Lens** design (see CLAUDE.md, Panel design). Final is the default view and is editable; Changes shows the diff.
 - Default modes: Clean up, Fix only, Shorter, Warmer, Polished
 - Voice: learned on demand ("Update from N new edits"), not automatically
 - The clipboard is restored after copy and after paste (there's a Settings toggle)
@@ -39,6 +39,14 @@ _Updated October 21, 2026._
 - `bash build.sh` bundles, signs, installs and launches Tidy.app; it runs in the menu bar.
 - The copy/paste path logs to NSLog (`Tidy: triggered from…`, `copy changed the pasteboard after…`,
   `pasting into…`) so missed selections and wrong-app pastes can be diagnosed from `log stream`.
+- **The panel is now the Lens design** (approved UI handoff), in light and dark with subtle glass.
+  Rendered offscreen and compared with `lens-light.png` / `lens-dark.png`: the wordmark, tabs and first
+  text line land on the same pixels; the lower rows are within 2-4 pt. Checked: Final, Changes
+  (multi-paragraph diff), hold for original, streaming, empty draft, error, long text (caps and scrolls),
+  short text, another mode selected. Not yet checked on screen: glass over a real desktop, corners and
+  shadow, dragging, keyboard focus, the hold gesture, Reduce Transparency.
+- Open decision: the Lens design has History and Settings as pages inside the panel. For now the two
+  title-bar icons close the panel and open the Settings window on that tab.
 - **Core-loop QA hasn't started.** Nothing in the QA checklist below has been verified on a Mac yet.
 
 ## First tasks, in order
@@ -71,13 +79,15 @@ Core loop
 - [ ] Esc closes and focus returns to the source app; ⌥⌘C while the panel is open closes it
 
 Panel
-- [ ] ⌘1–9 switch modes and rerun; the selected chip is highlighted
+- [ ] ⌘1–9 switch modes and rerun; the selected mode is lavender and shows its ⌘ number
 - [ ] Changes view: deletions struck through in red, insertions in green; readable in light and dark mode
-- [ ] Final view is editable; editing shows "edited by you" in the footer
+- [ ] Final is the default view and is editable; the word count follows edits; Tab moves to the refine field
+- [ ] Hold for original (mouse, or Space when focused) shows the draft and releases back without the panel jumping
 - [ ] Tweak field + ↩ reworks the current result
 - [ ] ⌘⇧C copies; ⌘R reruns; ⌘D toggles views; ⌘C/V/X/A/Z work inside the text fields
 - [ ] Error states read well: no key, bad key (401), offline, and an empty selection
-- [ ] Panel is resizable, draggable by its background, and opens on the screen with the mouse
+- [ ] Panel fits its text (grows downward, long text scrolls), drags by its title bar, opens on the screen with the mouse
+- [ ] Glass reads well over light and dark desktops; corners and shadow look right; Reduce Transparency gives an opaque panel
 
 Settings
 - [ ] Shortcut recorder: record ⌃⌥C, then it works globally; Esc cancels recording; Reset restores ⌥⌘C
