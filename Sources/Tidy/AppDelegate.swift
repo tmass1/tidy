@@ -10,7 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private lazy var panel: PanelController = {
         let controller = PanelController(store: store)
-        controller.openSettings = { [weak self] in self?.showSettings(.general) }
+        controller.openSettings = { [weak self] tab in self?.showSettings(tab) }
         return controller
     }()
 

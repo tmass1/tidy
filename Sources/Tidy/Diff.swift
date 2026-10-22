@@ -68,26 +68,23 @@ enum WordDiff {
     }
 }
 
-/// Attributed strings for the result area.
+/// Attributed strings for the panel's text areas.
 enum Styled {
-    static var base: [NSAttributedString.Key: Any] {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = 3
-        return [
-            .font: NSFont.systemFont(ofSize: 14),
-            .foregroundColor: NSColor.labelColor,
-            .paragraphStyle: paragraph,
-        ]
+    /// The main text (Final, streaming and the held original).
+    static func prose(_ s: String) -> NSAttributedString {
+        NSAttributedString(string: s, attributes: Theme.prose.attributes())
     }
 
-    static func plain(_ s: String) -> NSAttributedString {
-        NSAttributedString(string: s, attributes: base)
-    }
-
+    /// Changes: removals in red with a strikethrough, additions in green with an underline,
+    /// so color is never the only signal.
     static func diff(from original: String, to result: String) -> NSAttributedString {
-        guard !result.isEmpty else { return plain("") }
-        guard let chunks = WordDiff.diff(original, result) else { return plain(result) }
+        let base = Theme.diff.attributes()
+        guard !result.isEmpty else { return NSAttributedString(string: "", attributes: base) }
+        guard let chunks = WordDiff.diff(original, result) else {
+            return NSAttributedString(string: result, attributes: base)
+        }
         let out = NSMutableAttributedString()
+        var previous: WordDiff.Op = .same
         for chunk in chunks {
             var attrs = base
             let isBlank = chunk.text.trimmed.isEmpty
@@ -96,16 +93,41 @@ enum Styled {
                 break
             case .del:
                 if isBlank { continue } // a removed line break or space: just leave it out
-                attrs[.foregroundColor] = NSColor.secondaryLabelColor
+                attrs[.foregroundColor] = Theme.red
                 attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-                attrs[.strikethroughColor] = NSColor.systemRed.withAlphaComponent(0.7)
-                attrs[.backgroundColor] = NSColor.systemRed.withAlphaComponent(0.13)
+                attrs[.strikethroughColor] = Theme.red
+                attrs[.backgroundColor] = Theme.redWash
             case .ins:
                 if !isBlank {
-                    attrs[.backgroundColor] = NSColor.systemGreen.withAlphaComponent(0.22)
+                    attrs[.foregroundColor] = Theme.green
+                    attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                    attrs[.underlineColor] = Theme.greenLine
+                    attrs[.backgroundColor] = Theme.greenWash
                 }
             }
-            out.append(NSAttributedString(string: chunk.text, attributes: attrs))
+            // A removal right next to an addition gets a 4 pt gap so the two don't read as one
+            // word. The gap is a zero-width space so the highlight backgrounds don't stretch over it.
+            if previous != .same && chunk.op != .same && previous != chunk.op {
+                var gap = base
+                gap[.kern] = Theme.diff.kern + 4
+                out.append(NSAttributedString(string: "\u{200B}", attributes: gap))
+            }
+            // A removed line break isn't in the result, so show it as a space. Line breaks inside a
+            // change keep the plain style, or their highlight would run on to the margin.
+            let text = chunk.op == .del ? chunk.text.replacingOccurrences(of: "\n", with: " ") : chunk.text
+            let piece = NSMutableAttributedString(string: text, attributes: attrs)
+            if chunk.op == .ins {
+                let ns = text as NSString
+                var location = 0
+                while location < ns.length {
+                    let found = ns.rangeOfCharacter(from: .newlines, range: NSRange(location: location, length: ns.length - location))
+                    if found.location == NSNotFound { break }
+                    piece.setAttributes(base, range: found)
+                    location = NSMaxRange(found)
+                }
+            }
+            out.append(piece)
+            previous = chunk.op
         }
         return out
     }
