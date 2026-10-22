@@ -77,6 +77,8 @@ final class Store: ObservableObject {
     }
     @Published var voiceProfile: String { didSet { UserDefaults.standard.set(voiceProfile, forKey: "voiceProfile") } }
     @Published var useVoice: Bool { didSet { UserDefaults.standard.set(useVoice, forKey: "useVoice") } }
+    /// Update the voice profile on its own after a few edited sends (otherwise only on demand).
+    @Published var learnFromEdits: Bool { didSet { UserDefaults.standard.set(learnFromEdits, forKey: "learnFromEdits") } }
     @Published var restoreClipboard: Bool { didSet { UserDefaults.standard.set(restoreClipboard, forKey: "restoreClipboard") } }
     @Published var voiceUpdatedAt: Date? { didSet { UserDefaults.standard.set(voiceUpdatedAt, forKey: "voiceUpdatedAt") } }
     @Published private(set) var hasAPIKey: Bool
@@ -85,6 +87,7 @@ final class Store: ObservableObject {
 
     private let folder: URL
     private var cachedKey: String?
+    private var isLearning = false
 
     private init() {
         let defaults = UserDefaults.standard
@@ -100,6 +103,7 @@ final class Store: ObservableObject {
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .defaultCleanup
         voiceProfile = defaults.string(forKey: "voiceProfile") ?? ""
         useVoice = defaults.object(forKey: "useVoice") as? Bool ?? true
+        learnFromEdits = defaults.bool(forKey: "learnFromEdits")
         restoreClipboard = defaults.object(forKey: "restoreClipboard") as? Bool ?? true
         voiceUpdatedAt = defaults.object(forKey: "voiceUpdatedAt") as? Date
 
@@ -145,6 +149,21 @@ final class Store: ObservableObject {
             at: 0
         )
         if history.count > 500 { history.removeLast(history.count - 500) }
+        learnIfReady()
+    }
+
+    /// With "Learn my writing style" on, three new edited sends trigger a profile update.
+    private func learnIfReady() {
+        guard learnFromEdits, !isLearning, hasAPIKey, editsSinceVoiceUpdate.count >= 3 else { return }
+        isLearning = true
+        Task { @MainActor in
+            do {
+                try await learnVoice(samples: nil)
+            } catch {
+                NSLog("Tidy: automatic voice update failed: \(error.localizedDescription)")
+            }
+            isLearning = false
+        }
     }
 
     var editsSinceVoiceUpdate: [HistoryItem] {
