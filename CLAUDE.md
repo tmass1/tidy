@@ -130,3 +130,6 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   and Esc steps back (entry → list → text → closed). The Settings window still exists for everything
   the panel page doesn't cover (API key, shortcut recorder, modes, clipboard, login item, clearing
   history). It opens from the menu bar, ⌘, and the page's "All settings…" link.
+- Closing: Esc, ⌘W, ⌥⌘C again, the × in the title bar, or a click anywhere outside the panel (a
+  global mouse monitor, installed only while the panel is open). The × isn't in the Lens mock; it
+  was added at Tommy's request.

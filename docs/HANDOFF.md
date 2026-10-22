@@ -79,6 +79,7 @@ Core loop
 - [ ] The clipboard afterwards holds whatever was on it before Tidy ran
 - [ ] With nothing selected, ⌥⌘C opens an empty panel; ⌘V into the draft starts a cleanup automatically
 - [ ] Esc closes and focus returns to the source app; ⌥⌘C while the panel is open closes it
+- [ ] The × in the title bar closes it; so does clicking anywhere outside the panel (and the source app keeps focus)
 
 Panel
 - [ ] ⌘1–9 switch modes and rerun; the selected mode is lavender and shows its ⌘ number

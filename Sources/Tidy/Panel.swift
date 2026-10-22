@@ -20,6 +20,7 @@ final class PanelController {
 
     private var panel: FloatingPanel?
     private var keyMonitor: Any?
+    private var clickMonitor: Any?
 
     init(store: Store) {
         self.store = store
@@ -148,11 +149,22 @@ final class PanelController {
             }
             return handled ? nil : event
         }
+        // A global monitor only sees clicks that go to other apps, so any click it reports is
+        // outside the panel: close, like Spotlight.
+        clickMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                if self?.isVisible == true { self?.close() }
+            }
+        }
     }
 
     private func removeKeyMonitor() {
         if let monitor = keyMonitor { NSEvent.removeMonitor(monitor) }
+        if let monitor = clickMonitor { NSEvent.removeMonitor(monitor) }
         keyMonitor = nil
+        clickMonitor = nil
     }
 
     private func handleKey(_ event: NSEvent) -> Bool {
@@ -480,6 +492,8 @@ struct PanelView: View {
             IconButton(symbol: "slider.horizontal.3", label: "Settings", active: model.page == .settings) {
                 model.togglePage(.settings)
             }
+            IconButton(symbol: "xmark", label: "Close  esc", size: 13) { model.onClose?() }
+                .accessibilityLabel("Close")
         }
         .padding(.top, 21)
         .padding(.horizontal, 25)
