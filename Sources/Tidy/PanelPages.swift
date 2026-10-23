@@ -1,90 +1,45 @@
 import AppKit
 import SwiftUI
 
-// The Lens panel's History and Settings pages. They replace everything under the title bar;
-// "Back to text" (or Esc) returns to the editor with the text as it was.
+// The panel's Settings page: every setting, in tabs (General, Modes, Voice, History). It replaces
+// everything under the title bar; "Back to text" (or Esc) returns to the editor as it was.
+// The tab contents live in SettingsView.swift.
 
-// MARK: - History
-
-struct HistoryPage: View {
+struct SettingsPage: View {
     @ObservedObject var model: PanelModel
     @ObservedObject var store: Store
     let maxHeight: CGFloat
-    @State private var search = ""
-    @FocusState private var searchFocused: Bool
 
     var body: some View {
         PageScroll(maxHeight: maxHeight) {
             BackButton(title: "Back to text") { model.page = .editor }
-            PageTitle(text: "History")
-            if let id = model.historySelection, let item = store.history.first(where: { $0.id == id }) {
-                detail(item)
-            } else {
-                list
+            HStack(spacing: 15) {
+                tab("General", .general)
+                tab("Modes", .modes)
+                tab("Voice", .voice)
+                tab("History", .history)
             }
-        }
-        .onAppear { searchFocused = model.historySelection == nil }
-    }
-
-    private var matches: [HistoryItem] {
-        let term = search.trimmed.lowercased()
-        guard !term.isEmpty else { return store.history }
-        return store.history.filter {
-            "\($0.sent) \($0.original) \($0.app ?? "")".lowercased().contains(term)
-        }
-    }
-
-    private var searchField: some View {
-        TextField(
-            "Search history", text: $search,
-            prompt: Text("Find something you wrote").foregroundColor(Color(Theme.muted))
-        )
-        .textFieldStyle(.plain)
-        .lineBox(13)
-        .padding(.vertical, 10)
-        .padding(.bottom, 1)
-        .overlay(alignment: .bottom) { Rule() }
-        .focused($searchFocused)
-        .padding(.bottom, 12)
-    }
-
-    @ViewBuilder private var list: some View {
-        searchField
-        let items = matches
-        if items.isEmpty {
-            Text(store.history.isEmpty
-                 ? "Nothing here yet. Cleanups you replace or copy show up here."
-                 : "No matching cleanups.")
-                .font(.system(size: 12))
-                .foregroundStyle(Color(Theme.muted))
-                .lineBox(12)
-                .padding(.top, 14)
-        } else {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                ForEach(items) { item in
-                    HistoryRow(item: item) { model.historySelection = item.id }
-                }
+            .padding(.top, 10)
+            .padding(.bottom, 6)
+            switch store.settingsTab {
+            case .general: GeneralTab(store: store)
+            case .modes: ModesTab(store: store)
+            case .voice: VoiceTab(store: store)
+            case .history: HistoryTab(model: model, store: store)
             }
         }
     }
 
-    @ViewBuilder private func detail(_ item: HistoryItem) -> some View {
-        searchField
-        SmallButton(title: "‹ All history") { model.historySelection = nil }
-            .padding(.leading, -6)
-        Text(Self.caption(for: item))
-            .font(.system(size: 11))
-            .foregroundStyle(Color(Theme.muted))
-            .lineBox(11)
-            .padding(.top, 22)
-            .padding(.bottom, 7)
-        Text(item.sent)
-            .font(.system(size: 17))
-            .lineSpacing(17 * 0.7 - 3) // CSS line-height 1.7
-            .textSelection(.enabled)
-            .fixedSize(horizontal: false, vertical: true)
+    private func tab(_ title: String, _ value: SettingsTab) -> some View {
+        ViewTab(title: title, selected: store.settingsTab == value) {
+            store.settingsTab = value
+            model.historySelection = nil
+        }
     }
+}
 
+/// How a history entry is described in lists and headers.
+enum HistoryText {
     /// "Mail · Today, 10:42 AM"
     static func caption(for item: HistoryItem) -> String {
         let when = "\(dayFormatter.string(from: item.date)), \(timeFormatter.string(from: item.date))"
@@ -117,16 +72,17 @@ struct HistoryPage: View {
     }()
 }
 
-private struct HistoryRow: View {
+/// A history entry: when and where, the first line, then a snippet.
+struct HistoryRow: View {
     let item: HistoryItem
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
-        let text = HistoryPage.titleAndSnippet(item.sent)
+        let text = HistoryText.titleAndSnippet(item.sent)
         Button(action: action) {
             VStack(alignment: .leading, spacing: 0) {
-                Text(HistoryPage.caption(for: item))
+                Text(HistoryText.caption(for: item) + (item.edited ? " · edited" : ""))
                     .font(.system(size: 11))
                     .foregroundStyle(Color(Theme.muted))
                     .lineBox(11)
@@ -155,63 +111,6 @@ private struct HistoryRow: View {
         .onHover { hovering = $0 }
         .accessibilityElement(children: .combine)
         .accessibilityHint("Shows the full text")
-    }
-}
-
-// MARK: - Settings
-
-struct SettingsPage: View {
-    @ObservedObject var model: PanelModel
-    @ObservedObject var store: Store
-    let maxHeight: CGFloat
-
-    var body: some View {
-        PageScroll(maxHeight: maxHeight) {
-            BackButton(title: "Back to text") { model.page = .editor }
-            PageTitle(text: "Make it yours.")
-            SettingRow(title: "Writing model", detail: "Use for your next cleanup.") {
-                ModelMenu(store: store)
-            }
-            SettingRow(title: "Open from any app", detail: "Select your text, then press the shortcut.") {
-                Text(store.shortcut.display)
-                    .font(.system(size: 11))
-                    .opacity(0.6)
-            }
-            CheckboxRow(
-                title: "Learn my writing style", detail: "Notice the edits I make before replacing.",
-                isOn: $store.learnFromEdits
-            )
-            CheckboxRow(
-                title: "Write in my voice", detail: "Use my style profile in new cleanups.",
-                isOn: $store.useVoice
-            )
-            profile
-            SmallButton(title: "All settings…") { model.onAllSettings?() }
-                .padding(.leading, -9)
-                .padding(.top, 14)
-        }
-    }
-
-    private var profile: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("Your voice profile")
-                .font(.system(size: 11))
-                .foregroundStyle(Color(Theme.muted))
-                .frame(minHeight: 11 * 1.7)
-            Text(store.voiceProfile.trimmed.isEmpty ? "Nothing learned yet." : store.voiceProfile)
-                .lineSpacing(13 * 0.7 - 3) // CSS line-height 1.7
-                .foregroundStyle(Color(store.voiceProfile.trimmed.isEmpty ? Theme.muted : Theme.ink))
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.vertical, 3) // half the 1.7 line-height's leading, above and below
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, 15)
-        .background(Color(Theme.popover))
-        .overlay(alignment: .leading) {
-            Rectangle().fill(Color(Theme.accent)).frame(width: 2)
-        }
-        .padding(.top, 22)
     }
 }
 
@@ -347,19 +246,6 @@ private struct PageHeightKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
-private struct PageTitle: View {
-    let text: String
-    var body: some View {
-        Text(text)
-            .font(Font(NSFont.systemFont(ofSize: 24, weight: Theme.actionWeight) as CTFont))
-            .tracking(-0.8)
-            .lineBox(24)
-            .padding(.top, 5)
-            .padding(.bottom, 20)
-            .accessibilityAddTraits(.isHeader)
-    }
-}
-
 private struct BackButton: View {
     let title: String
     let action: () -> Void
@@ -371,12 +257,14 @@ private struct BackButton: View {
     }
 }
 
-/// A quiet text button (muted, hover fill), used for back links.
+/// A quiet text button (muted, hover fill): back links, Reset, Copy. Red when destructive.
 struct SmallButton: View {
     let title: String
     var symbol: String?
+    var destructive = false
     let action: () -> Void
     @State private var hovering = false
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         Button(action: action) {
@@ -386,13 +274,14 @@ struct SmallButton: View {
                 }
                 Text(title).lineBox(13)
             }
-            .foregroundStyle(Color(hovering ? Theme.ink : Theme.muted))
+            .foregroundStyle(Color(destructive ? Theme.red : hovering ? Theme.ink : Theme.muted))
             .padding(.horizontal, 9)
             .padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 8).fill(hovering ? Color(Theme.layer) : .clear))
+            .background(RoundedRectangle(cornerRadius: 8).fill(hovering && isEnabled ? Color(Theme.layer) : .clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(BareButtonStyle())
+        .opacity(isEnabled ? 1 : 0.5)
         .onHover { hovering = $0 }
     }
 }

@@ -59,10 +59,9 @@ _Updated October 23, 2026._
 - History and Settings are pages inside the panel, as in the Lens design (rendered and checked in
   light and dark: list, entry, empty, settings with and without a voice profile). "Learn my writing
   style" is a new setting: when on, three new edited sends update the voice profile automatically.
-  The page adds an "All settings…" link to the Settings window, which isn't in the mock.
-- The Settings window now matches the panel (glass, wordmark, underline tabs, ruled rows, lavender
-  checkboxes). No mock exists for it; it reuses the panel's components. Rendered in light and dark.
-  The panel closes on a × or a click outside it, as Tommy asked.
+- **All settings are in the panel** as one tabbed page (General, Modes, Voice, History); the separate
+  Settings window is gone. Rendered in light and dark. The panel closes on a × or a click outside it
+  (except while Settings is showing), as Tommy asked.
 - **Core-loop QA hasn't started.** Nothing in the QA checklist below has been verified on a Mac yet.
 
 ## First tasks, in order
@@ -107,8 +106,10 @@ Panel
 - [ ] Error states read well: no key, bad key (401), offline, and an empty selection
 - [ ] Panel fits its text (grows downward, long text scrolls), drags by its title bar, opens on the screen with the mouse
 - [ ] Glass reads well over light and dark desktops; corners and shadow look right; Reduce Transparency gives an opaque panel
-- [ ] History page: search filters as you type, an entry opens and its text can be copied, Esc goes back a step
-- [ ] Settings page: the model menu changes the model used next; both checkboxes persist after relaunch; "All settings…" opens the window
+- [ ] Settings › History: search filters as you type, an entry opens, Copy works, Clear history asks inline first, Esc goes back a step
+- [ ] Settings › General: the API key saves, the shortcut recorder works, the model menu changes the next cleanup, checkboxes persist after relaunch
+- [ ] Settings › Modes: open, rename, edit, delete, add, drag to reorder, Reset to defaults
+- [ ] The menu bar's Settings…, History… and ⌘, open the panel on the right tab; clicking another app doesn't close it while on Settings
 - [ ] With "Learn my writing style" on, three edited sends update the voice profile on their own
 
 Settings

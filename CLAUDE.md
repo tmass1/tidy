@@ -39,7 +39,7 @@ Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tomm
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
   TidyApp.swift              @main entry, String helpers (trimmed, wordCount, firstLine)
-  AppDelegate.swift          status item + menu, hotkey → trigger(), settings window (GlassWindow), hidden Edit/Window menus
+  AppDelegate.swift          status item + menu, hotkey → trigger(), showSettings → the panel, hidden Edit menu
   HotKey.swift               Shortcut model (Carbon keycodes/modifiers) + HotKeyCenter (RegisterEventHotKey)
   Selection.swift            Accessibility check; copySelection() sends ⌘C; paste() sends ⌘V; clipboard snapshot/restore
   Claude.swift               model list + streaming client (AsyncThrowingStream<String>)
@@ -48,8 +48,8 @@ Sources/Tidy/
   Theme.swift                Lens design tokens: light/dark colors, glass, type metrics (from the UI handoff's CSS)
   Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling, fit-to-content height),
                              PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
-  PanelPages.swift           The panel's History and Settings pages ("Make it yours.")
-  SettingsView.swift         Settings window in the Lens style: General, Modes, Voice, History (+ ShortcutRecorder)
+  PanelPages.swift           The panel's tabbed Settings page + shared Lens parts (SettingRow, LensField, LensButton…)
+  SettingsView.swift         The Settings tabs: General, Modes, Voice, History (+ ShortcutRecorder, UpdatesRow)
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
   Updater.swift              checks GitHub's latest release daily, downloads Tidy.zip, verifies team Y5V8Y3BH9A, swaps + relaunches
 ```
@@ -79,7 +79,7 @@ Sources/Tidy/
 
 Voice learning: `HistoryItem.edited` is true when what was sent differs from Claude's suggestion.
 `Store.learnVoice()` sends recent edited pairs, recent drafts, and optional pasted samples to Claude
-and replaces `voiceProfile` with bullet points. It runs on demand (Settings window › Voice) or, when
+and replaces `voiceProfile` with bullet points. It runs on demand (Settings › Voice) or, when
 "Learn my writing style" (`learnFromEdits`) is on, by itself after three new edited sends. When
 "Write in my voice" (`useVoice`) is on, the profile is appended to every system prompt.
 
@@ -131,13 +131,14 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - The text is an NSTextView (`ProseView`), not TextEditor, so line height, tracking and the diff's
   rounded highlights (`HighlightLayoutManager`) match the design.
 - Reduce Transparency swaps the glass for an opaque surface.
-- History and Settings are pages inside the panel (`PanelModel.page`); the title-bar icons toggle them
-  and Esc steps back (entry → list → text → closed). The Settings window still exists for everything
-  the panel page doesn't cover (API key, shortcut recorder, modes, clipboard, login item, clearing
-  history). It opens from the menu bar, ⌘, and the page's "All settings…" link. It uses the same Lens
-  language (borderless `GlassWindow`, wordmark, underline tabs, `SettingRow`/`CheckboxRow`, `LensField`,
-  `LensButton`); there's no mock for it, so it's built from the panel's parts. Shared parts live in
-  `PanelPages.swift`.
+- **All settings live in the panel**, on one Settings page with tabs: General, Modes, Voice, History
+  (`PanelModel.page == .settings`, tab in `Store.settingsTab`). There is no separate Settings window.
+  The sliders icon opens General, the clock icon opens History, and either toggles back to the text.
+  The menu bar's Settings… / History… / Check for Updates…, ⌘, and first launch (no API key) all call
+  `PanelController.showSettings`, which opens the panel there. Esc steps back (history entry → list →
+  text → closed). There's no mock for the tabs, so they're built from the panel's parts (`SettingRow`,
+  `CheckboxRow`, `LensField`, `LensButton`, `SmallButton`). Modes and History drill in (list → item) to
+  fit the 602 pt width. Clicking outside the panel doesn't close it while Settings is showing.
 - Character limit: click the count in the status line to set "Max characters" for the current app
   (`Store.charLimits`, keyed by bundle id). With a limit the count reads "164 / 300 characters" (red when
   over), `Prompts.user` tells Claude it's a hard limit, and setting a limit below the current result

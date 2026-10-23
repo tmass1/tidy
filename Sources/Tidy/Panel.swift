@@ -16,7 +16,6 @@ final class FloatingPanel: NSPanel {
 final class PanelController {
     let store: Store
     let model: PanelModel
-    var openSettings: (@MainActor (SettingsTab) -> Void)?
 
     private var panel: FloatingPanel?
     private var keyMonitor: Any?
@@ -28,7 +27,6 @@ final class PanelController {
         model.onClose = { [weak self] in self?.close() }
         model.onCopy = { [weak self] text in self?.copy(text) }
         model.onReplace = { [weak self] text in self?.replace(text) }
-        model.onAllSettings = { [weak self] in self?.openSettingsClosingPanel(.general) }
         model.onHeight = { [weak self] height in self?.fit(height: height) }
     }
 
@@ -54,10 +52,13 @@ final class PanelController {
         panel?.orderOut(nil)
     }
 
-    /// Settings is a normal window, so close the floating panel first or it would sit on top.
-    private func openSettingsClosingPanel(_ tab: SettingsTab) {
-        close()
-        openSettings?(tab)
+    /// Opens the panel on its Settings page (from the menu bar, or on first launch). If the panel
+    /// is already open it switches in place, keeping the text.
+    func showSettings(_ tab: SettingsTab) {
+        if !isVisible {
+            show(text: "", source: nil, hadSelection: false, notice: nil)
+        }
+        model.openSettings(tab)
     }
 
     private func copy(_ text: String) {
@@ -155,7 +156,8 @@ final class PanelController {
             matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                if self?.isVisible == true { self?.close() }
+                // Not while on Settings: you may be off copying an API key from the browser.
+                if self?.isVisible == true, self?.model.page == .editor { self?.close() }
             }
         }
     }
@@ -211,7 +213,7 @@ final class PanelController {
         case "r": model.run(); return true
         case "d": model.toggleView(); return true
         case "w": close(); return true
-        case ",": openSettingsClosingPanel(.general); return true
+        case ",": model.openSettings(.general); return true
         case "v":
             let shouldAutoRun = model.original.trimmed.isEmpty && model.result.isEmpty && !model.isStreaming
             let pasted = NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: nil)
@@ -242,7 +244,7 @@ final class PanelController {
 final class PanelModel: ObservableObject {
     enum ResultView: Hashable { case changes, final }
     enum CommitAction { case replace, copy }
-    enum Page: Hashable { case editor, history, settings }
+    enum Page: Hashable { case editor, settings }
 
     @Published var original = ""
     @Published var result = ""
@@ -255,7 +257,7 @@ final class PanelModel: ObservableObject {
     @Published var page: Page = .editor {
         didSet {
             holdingOriginal = false
-            if page != .history { historySelection = nil }
+            if page != .settings { historySelection = nil }
         }
     }
     @Published var historySelection: UUID?
@@ -272,7 +274,6 @@ final class PanelModel: ObservableObject {
     var onClose: (@MainActor () -> Void)?
     var onCopy: (@MainActor (String) -> Void)?
     var onReplace: (@MainActor (String) -> Void)?
-    var onAllSettings: (@MainActor () -> Void)?
     var onHeight: (@MainActor (CGFloat) -> Void)?
 
     init(store: Store) { self.store = store }
@@ -353,9 +354,24 @@ final class PanelModel: ObservableObject {
         start(base: base, instruction: Prompts.tweakInstruction(change))
     }
 
-    /// The title-bar icons: open a page, or go back to the text if it's already open.
-    func togglePage(_ target: Page) {
-        page = (page == target) ? .editor : target
+    func openSettings(_ tab: SettingsTab) {
+        store.settingsTab = tab
+        page = .settings
+    }
+
+    /// Which title-bar icon is lit: the clock for the History tab, the sliders for the rest.
+    func isShowing(_ tab: SettingsTab) -> Bool {
+        guard page == .settings else { return false }
+        return tab == .history ? store.settingsTab == .history : store.settingsTab != .history
+    }
+
+    /// The title-bar icons: open that part of Settings, or go back to the text if it's showing.
+    func toggleSettings(_ tab: SettingsTab) {
+        if isShowing(tab) {
+            page = .editor
+        } else {
+            openSettings(tab)
+        }
     }
 
     func toggleView() {
@@ -459,8 +475,6 @@ struct PanelView: View {
                     subfooter
                 }
                 .background(Color(Theme.soft))
-            case .history:
-                HistoryPage(model: model, store: store, maxHeight: pageMaxHeight)
             case .settings:
                 SettingsPage(model: model, store: store, maxHeight: pageMaxHeight)
             }
@@ -500,11 +514,11 @@ struct PanelView: View {
                 .padding(.leading, 4)
             }
             Spacer(minLength: 0)
-            IconButton(symbol: "clock.arrow.circlepath", label: "History", active: model.page == .history) {
-                model.togglePage(.history)
+            IconButton(symbol: "clock.arrow.circlepath", label: "History", active: model.isShowing(.history)) {
+                model.toggleSettings(.history)
             }
-            IconButton(symbol: "slider.horizontal.3", label: "Settings", active: model.page == .settings) {
-                model.togglePage(.settings)
+            IconButton(symbol: "slider.horizontal.3", label: "Settings", active: model.isShowing(.general)) {
+                model.toggleSettings(.general)
             }
             IconButton(symbol: "xmark", label: "Close  esc", size: 13) { model.onClose?() }
                 .accessibilityLabel("Close")

@@ -5,12 +5,10 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let store = Store.shared
     private var statusItem: NSStatusItem?
-    private var settingsWindow: NSWindow?
     private var lastTrigger = Date.distantPast
 
     private lazy var panel: PanelController = {
         let controller = PanelController(store: store)
-        controller.openSettings = { [weak self] tab in self?.showSettings(tab) }
         return controller
     }()
 
@@ -111,31 +109,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func menuSettings() { showSettings(.general) }
     @objc private func menuQuit() { NSApp.terminate(nil) }
 
-    // MARK: Settings window
+    // MARK: Settings
 
+    /// Settings live in the panel, on its Settings page.
     func showSettings(_ tab: SettingsTab) {
-        store.settingsTab = tab
-        if settingsWindow == nil {
-            // Borderless glass, like the panel, but a normal window: it activates Tidy and
-            // takes part in ⌘W and Mission Control.
-            let window = GlassWindow(
-                contentRect: NSRect(origin: .zero, size: SettingsView.size),
-                styleMask: [.borderless, .closable, .miniaturizable],
-                backing: .buffered, defer: false
-            )
-            window.title = "Tidy Settings"
-            window.isReleasedWhenClosed = false
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            window.hasShadow = true
-            window.contentView = NSHostingView(rootView: SettingsView(store: store) { [weak window] in
-                window?.performClose(nil)
-            })
-            window.center()
-            settingsWindow = window
-        }
-        NSApp.activate()
-        settingsWindow?.makeKeyAndOrderFront(nil)
+        panel.showSettings(tab)
     }
 
     // MARK: Main menu (invisible, but gives text fields cut/copy/paste/undo)
@@ -159,20 +137,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         editItem.submenu = edit
         main.addItem(editItem)
 
-        let windowItem = NSMenuItem()
-        let windowMenu = NSMenu(title: "Window")
-        windowMenu.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        windowItem.submenu = windowMenu
-        main.addItem(windowItem)
-
         NSApp.mainMenu = main
     }
-}
-
-/// A borderless window that still behaves like a normal one: it can be key and main, and
-/// ⌘W / the × close it (performClose would otherwise beep without a title-bar close button).
-final class GlassWindow: NSWindow {
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
-    override func performClose(_ sender: Any?) { close() }
 }
