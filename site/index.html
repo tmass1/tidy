@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tidy — clean up a message without leaving it</title>
+<meta name="description" content="Tidy is a free Mac menu bar app. Select a draft in any app, press ⌥⌘C, and Claude rewrites it in place. ⌘↩ puts it back.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:title" content="Tidy">
+<meta property="og:description" content="Clean up a message without leaving it. Select, ⌥⌘C, ⌘↩.">
+<meta property="og:image" content="assets/hero-light.png">
+<style>
+  /* Tokens: the app's Lens palette (Sources/Tidy/Theme.swift). */
+  :root {
+    --paper: #fcfcff;
+    --page: #f6f5fa;
+    --ink: #292832;
+    --muted: #74717f;
+    --rule: #aca2bd38;
+    --layer: #ecebf4;
+    --accent: #6350c5;
+    --accent-soft: #eee9ff;
+    --action: #292832;
+    --on-action: #ffffff;
+    --green: #286248;
+    --green-wash: #e7f3eb;
+    --red: #a54b56;
+    --red-wash: #f9e9ed;
+    --wash-a: #b9cee04a;
+    --wash-b: #c9b9db44;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #26252e;
+      --page: #1c1b22;
+      --ink: #f0eef7;
+      --muted: #b6b1c4;
+      --rule: #b9aaca2b;
+      --layer: #302e3a;
+      --accent: #bcabff;
+      --accent-soft: #393047;
+      --action: #eeebf6;
+      --on-action: #282432;
+      --green: #a3d8b9;
+      --green-wash: #273e33;
+      --red: #f1afb7;
+      --red-wash: #472f36;
+      --wash-a: #879ebc29;
+      --wash-b: #b197c92b;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+  img { display: block; max-width: 100%; height: auto; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+  kbd {
+    font: inherit;
+    font-size: 0.82em;
+    display: inline-block;
+    min-width: 1.9em;
+    padding: 1px 7px;
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 7px;
+    background: var(--paper);
+    text-align: center;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  /* Top bar */
+  .top { display: flex; align-items: center; gap: 24px; padding: 26px 0; }
+  .wordmark { font-size: 21px; font-weight: 650; letter-spacing: -1px; text-decoration: none; }
+  .top nav { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 14px; }
+  .top nav a:not(.button) { color: var(--muted); text-decoration: none; }
+  .top nav a:not(.button):hover { color: var(--ink); }
+
+  /* Buttons: the app's replace action, dark in light mode and pale in dark mode. */
+  .button {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--action); color: var(--on-action);
+    text-decoration: none; font-weight: 600; letter-spacing: -0.1px;
+    border-radius: 11px; padding: 12px 18px;
+    box-shadow: 0 2px 5px #2720361f;
+    transition: filter .15s;
+  }
+  .button:hover { filter: brightness(1.12); }
+  .button.small { font-size: 13px; padding: 7px 12px; border-radius: 9px; }
+  .button svg { width: 16px; height: 16px; }
+  .quiet-link { color: var(--muted); text-decoration: none; font-size: 15px; }
+  .quiet-link:hover { color: var(--ink); }
+
+  /* Hero */
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: center; gap: 40px; padding: 56px 0 72px;
+  }
+  .eyebrow { font-size: 14px; color: var(--accent); margin: 0 0 18px; }
+  h1 { font-size: 54px; line-height: 1.04; font-weight: 650; letter-spacing: -2px; margin: 0 0 22px; }
+  .lede { font-size: 19px; line-height: 1.55; color: var(--muted); margin: 0 0 34px; max-width: 30em; }
+  .lede strong { color: var(--ink); font-weight: 500; }
+  .actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .meta { font-size: 13px; color: var(--muted); margin: 18px 0 0; }
+  .shot { position: relative; isolation: isolate; }
+  /* A faint cool wash behind the glass, so its translucency reads. */
+  .shot::before {
+    content: ""; position: absolute; inset: 6% 2% 8%; z-index: -1; border-radius: 40px;
+    background:
+      radial-gradient(ellipse at 10% 30%, var(--wash-a), transparent 60%),
+      radial-gradient(ellipse at 90% 72%, var(--wash-b), transparent 62%);
+    filter: blur(18px);
+  }
+  /* The renders carry 64 px of transparent margin for their shadow; pull it back into the layout. */
+  .shot img { width: calc(100% + 64px); max-width: none; margin: -32px; }
+
+  /* Sections */
+  section.block { padding: 72px 0; border-top: 1px solid var(--rule); }
+  h2 { font-size: 34px; line-height: 1.15; font-weight: 650; letter-spacing: -1.1px; margin: 0 0 12px; }
+  .section-lede { color: var(--muted); margin: 0 0 44px; max-width: 34em; }
+
+  /* How it works */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; list-style: none; margin: 0; padding: 0; }
+  .steps li { padding: 4px 28px 0; border-left: 1px solid var(--rule); }
+  .steps li:first-child { padding-left: 0; border-left: 0; }
+  .steps .keys { display: flex; gap: 6px; height: 34px; align-items: center; margin-bottom: 16px; font-size: 20px; }
+  .steps .select {
+    font-size: 17px; padding: 2px 6px; border-radius: 4px;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .steps h3 { font-size: 17px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.2px; }
+  .steps p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  /* Features */
+  .features { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+  .feature-list { list-style: none; margin: 0; padding: 0; }
+  .feature-list li { padding: 20px 0 21px; border-bottom: 1px solid var(--rule); }
+  .feature-list li:first-child { padding-top: 6px; }
+  .feature-list h3 { font-size: 17px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.2px; }
+  .feature-list p { margin: 0; color: var(--muted); font-size: 15px; }
+  .diff del { color: var(--red); background: var(--red-wash); border-radius: 3px; padding: 0 2px; }
+  .diff ins {
+    color: var(--green); background: var(--green-wash); border-radius: 3px; padding: 0 2px;
+    text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--green) 40%, transparent);
+    text-underline-offset: 3px;
+  }
+  .chip { color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 1px 7px; font-size: 14px; white-space: nowrap; }
+  .features .shot { position: sticky; top: 32px; }
+
+  /* Trust and requirements */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .rows li { display: flex; gap: 16px; padding: 16px 0 17px; border-bottom: 1px solid var(--rule); }
+  .rows li:first-child { border-top: 1px solid var(--rule); }
+  .rows .label { flex: 0 0 9.5em; font-weight: 500; font-size: 15px; }
+  .rows .value { color: var(--muted); font-size: 15px; }
+  .h3-small { font-size: 13px; color: var(--muted); font-weight: 400; margin: 0 0 14px; }
+
+  /* Closing call to action */
+  .closing { text-align: center; padding: 88px 0 96px; border-top: 1px solid var(--rule); }
+  .closing h2 { margin-bottom: 14px; }
+  .closing p { color: var(--muted); margin: 0 0 30px; }
+  .closing .actions { justify-content: center; }
+
+  footer { border-top: 1px solid var(--rule); padding: 28px 0 40px; font-size: 13px; color: var(--muted); }
+  footer .wrap { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  footer .wordmark { font-size: 17px; color: var(--ink); }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+  footer .spacer { flex: 1; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding-top: 24px; }
+    h1 { font-size: 42px; letter-spacing: -1.4px; }
+    .features, .two { grid-template-columns: 1fr; }
+    .features .shot { position: static; order: -1; }
+    .steps { grid-template-columns: 1fr; gap: 28px; }
+    .steps li, .steps li:first-child { padding: 0; border-left: 0; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 20px; }
+    .top nav .github { display: none; }
+    h1 { font-size: 36px; }
+    .rows li { flex-direction: column; gap: 2px; }
+    .rows .label { flex-basis: auto; }
+    .shot img { width: calc(100% + 40px); margin: -20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <a class="wordmark" href="./" aria-label="Tidy home">tidy</a>
+    <nav aria-label="Primary">
+      <a class="github" href="https://github.com/tmass1/tidy">Source</a>
+      <a class="button small" href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip">Download</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">A menu bar app for Mac</p>
+        <h1>Clean up a message without leaving it.</h1>
+        <p class="lede">
+          Select a draft in Mail, Messages, Slack or anywhere else and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd>.
+          Claude rewrites it in a panel over the app you’re in.
+          <strong>Press <kbd>⌘</kbd><kbd>↩</kbd> and it replaces your selection.</strong>
+        </p>
+        <div class="actions">
+          <a class="button" href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>
+            Download for Mac
+          </a>
+          <a class="quiet-link" href="https://github.com/tmass1/tidy">View the source →</a>
+        </div>
+        <p class="meta">Free · Source on GitHub · macOS 14 or later · Apple Silicon</p>
+      </div>
+      <div class="shot">
+        <picture>
+          <source srcset="assets/hero-dark.png" media="(prefers-color-scheme: dark)">
+          <img src="assets/hero-light.png" width="730" height="655"
+               alt="The Tidy panel over Messages, showing a cleaned-up text: “Hey! Running about 15 minutes behind, the 101 is a parking lot. Can we push dinner to 7:15?” with a Replace in Messages button.">
+        </picture>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="how">
+      <h2 id="how">Three keys, no copy-paste.</h2>
+      <p class="section-lede">No chat window, no switching apps. Your draft never leaves the place you’re writing it.</p>
+      <ol class="steps">
+        <li>
+          <div class="keys"><span class="select">hey can u send</span></div>
+          <h3>Select your draft</h3>
+          <p>In any app you write in: an email, a text, a Slack thread, a Notes page, a form in Chrome.</p>
+        </li>
+        <li>
+          <div class="keys"><kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd></div>
+          <h3>Tidy opens on top</h3>
+          <p>A cleaner version streams in within about a second. Edit it, switch modes, or ask for a change.</p>
+        </li>
+        <li>
+          <div class="keys"><kbd>⌘</kbd><kbd>↩</kbd></div>
+          <h3>It goes back in place</h3>
+          <p>The new text replaces your selection, and your clipboard is put back the way it was.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" aria-labelledby="features">
+      <h2 id="features">Edits you can see, in a voice that’s yours.</h2>
+      <p class="section-lede">Tidy fixes what needs fixing and shows you exactly what it touched.</p>
+      <div class="features">
+        <ul class="feature-list">
+          <li>
+            <h3>See every change</h3>
+            <p class="diff"><del>can</del> <ins>Could</ins> someone look at the <del>api</del> <ins>API</ins> timing before <del>thursday</del> <ins>Thursday?</ins> Removals are struck through, additions underlined. Hold for your original any time.</p>
+          </li>
+          <li>
+            <h3>A mode for the moment</h3>
+            <p><span class="chip">Clean up</span> Fix only, Shorter, Warmer and Polished, plus any you write yourself. Switch with <kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd>.</p>
+          </li>
+          <li>
+            <h3>Refine in plain words</h3>
+            <p>Type “a little warmer” or “mention Friday” and the draft is reworked, not rewritten from scratch.</p>
+          </li>
+          <li>
+            <h3>Still sounds like you</h3>
+            <p>Opt in and Tidy learns from the edits you make before you send, so the next cleanup needs fewer.</p>
+          </li>
+          <li>
+            <h3>Fits the box</h3>
+            <p>Set a character limit for an app, like 160 for texts, and Tidy keeps every rewrite under it.</p>
+          </li>
+          <li>
+            <h3>Everything you sent, findable</h3>
+            <p>A searchable history of your cleanups, kept on your Mac.</p>
+          </li>
+        </ul>
+        <div class="shot">
+          <picture>
+            <source srcset="assets/changes-dark.png" media="(prefers-color-scheme: dark)">
+            <img src="assets/changes-light.png" width="730" height="655" loading="lazy"
+                 alt="The Changes view over Slack: removed words in red with a strikethrough, added words in green with an underline.">
+          </picture>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="yours">
+      <div class="two">
+        <div>
+          <h2 id="yours">Your key, your Mac.</h2>
+          <p class="section-lede">Tidy uses your own Anthropic API key, so you pay Anthropic directly for what you use. There’s no account to make and no Tidy server in the middle.</p>
+        </div>
+        <div>
+          <p class="h3-small">Privacy</p>
+          <ul class="rows">
+            <li><span class="label">Your text</span><span class="value">Goes straight from your Mac to Anthropic’s API, and nowhere else.</span></li>
+            <li><span class="label">Your key</span><span class="value">Stored in your macOS Keychain.</span></li>
+            <li><span class="label">Your history</span><span class="value">Saved on your Mac only. Clear it any time.</span></li>
+            <li><span class="label">Tracking</span><span class="value">None. The only other request is a daily check for updates on GitHub.</span></li>
+          </ul>
+          <p class="h3-small" style="margin-top: 44px">What you need</p>
+          <ul class="rows">
+            <li><span class="label">A Mac</span><span class="value">Apple Silicon, macOS 14 Sonoma or later.</span></li>
+            <li><span class="label">An API key</span><span class="value">From <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a>. Tidy asks for it on first launch.</span></li>
+            <li><span class="label">Accessibility</span><span class="value">macOS asks once. It lets Tidy copy your selection and paste the result.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="get">
+      <h2 id="get">Send the better version.</h2>
+      <p>Free, and under a megabyte to download.</p>
+      <div class="actions">
+        <a class="button" href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>
+          Download for Mac
+        </a>
+        <a class="quiet-link" href="https://github.com/tmass1/tidy/releases">All releases →</a>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span class="wordmark">tidy</span>
+    <span>Made by Tommy Massaro</span>
+    <span class="spacer"></span>
+    <a href="https://github.com/tmass1/tidy">Source</a>
+    <a href="https://github.com/tmass1/tidy/releases">Releases</a>
+    <a href="https://github.com/tmass1/tidy/issues">Report a problem</a>
+  </div>
+</footer>
+
+</body>
+</html>
