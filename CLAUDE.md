@@ -19,7 +19,8 @@ about polish; treat UI details as product decisions, not afterthoughts.
 ## Commands
 
 ```bash
-bash build.sh            # compile (release, arm64), bundle Tidy.app, ad-hoc sign, install to /Applications, launch
+bash build.sh            # compile (release, arm64), bundle Tidy.app, sign, install to /Applications, launch
+bash release.sh 1.1      # signed + notarized Tidy.zip, tag v1.1, GitHub release (the updater's source)
 swift build              # compile only (fast check while iterating)
 tail -50 build.log       # build.sh writes all its output here
 log stream --predicate 'process == "Tidy"' --level debug   # runtime logs (NSLog)
@@ -31,7 +32,9 @@ Requires Apple's command line tools (`xcode-select --install`). Full Xcode isn't
 
 ```
 Package.swift
-build.sh                     build + bundle + sign + install (also resets the Accessibility grant, see Gotchas)
+build.sh                     build + bundle + sign (Developer ID if present, else ad-hoc) + install
+release.sh                   version bump, notarize, tag, `gh release create` with Tidy.zip
+site/                        landing page (static HTML, Lens tokens), deployed by .github/workflows/pages.yml
 Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tommymassaro.tidy
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
@@ -48,6 +51,7 @@ Sources/Tidy/
   PanelPages.swift           The panel's History and Settings pages ("Make it yours.")
   SettingsView.swift         Settings window in the Lens style: General, Modes, Voice, History (+ ShortcutRecorder)
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
+  Updater.swift              checks GitHub's latest release daily, downloads Tidy.zip, verifies team Y5V8Y3BH9A, swaps + relaunches
 ```
 
 ## How a cleanup flows
@@ -100,11 +104,12 @@ and replaces `voiceProfile` with bullet points. It runs on demand (Settings wind
 
 ## Gotchas
 
-- **Accessibility permission resets on every rebuild.** Ad-hoc signing gives each build a new
-  signature, so the old grant goes stale (the toggle stays on but does nothing). `build.sh` runs
-  `tccutil reset Accessibility com.tommymassaro.tidy` so macOS asks again cleanly. Re-allow Tidy after each build.
-- For the same reason, the **Keychain may ask** "Tidy wants to use confidential information" after a
-  rebuild. Choose Always Allow.
+- **Signing:** `build.sh` signs with Tommy's "Developer ID Application: Thomas Massaro (Y5V8Y3BH9A)",
+  so the Accessibility grant and Keychain access survive rebuilds. On a Mac without that certificate it
+  falls back to ad-hoc signing, which gives every build a new signature; then it runs
+  `tccutil reset Accessibility com.tommymassaro.tidy` so macOS asks again cleanly.
+- The repo is **public** (github.com/tmass1/tidy). Don't commit keys, personal data or private notes.
+- Notarization needs a keychain profile named `tidy-notary` (see the top of `release.sh`); only Tommy can create it.
 - `RegisterEventHotKey` fails if another app already owns the combo (Tommy's old Hammerspoon
   script used ⌥⌘C; it's commented out in `~/.hammerspoon/init.lua`). `Store.hotKeyRegistered`
   drives a warning in Settings.
