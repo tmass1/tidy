@@ -82,6 +82,8 @@ Core loop
 - [ ] The clipboard afterwards holds whatever was on it before Tidy ran
 - [ ] With nothing selected, ⌥⌘C opens an empty panel; ⌘V into the draft starts a cleanup automatically
 - [ ] Esc closes and focus returns to the source app; ⌥⌘C while the panel is open closes it
+- [ ] Selecting text in Final or Changes shows one solid highlight, not separate bars per line
+- [ ] Character limit: click the count, set 160 in Messages, ↩; the next cleanup stays under it; the count turns red if your edits go over; Clear removes it; another app keeps its own limit
 - [ ] The × in the title bar closes it; so does clicking anywhere outside the panel (and the source app keeps focus)
 
 Panel

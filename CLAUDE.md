@@ -70,7 +70,7 @@ Sources/Tidy/
 | What | Where |
 | --- | --- |
 | API key | Keychain, service `com.tommymassaro.tidy`, account `anthropic-api-key` |
-| model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt | `UserDefaults` (`com.tommymassaro.tidy`) |
+| model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt, charLimits | `UserDefaults` (`com.tommymassaro.tidy`) |
 | modes, history (max 500) | JSON in `~/Library/Application Support/Tidy/` |
 
 Voice learning: `HistoryItem.edited` is true when what was sent differs from Claude's suggestion.
@@ -133,6 +133,12 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   language (borderless `GlassWindow`, wordmark, underline tabs, `SettingRow`/`CheckboxRow`, `LensField`,
   `LensButton`); there's no mock for it, so it's built from the panel's parts. Shared parts live in
   `PanelPages.swift`.
+- Character limit: click the count in the status line to set "Max characters" for the current app
+  (`Store.charLimits`, keyed by bundle id). With a limit the count reads "164 / 300 characters" (red when
+  over), `Prompts.user` tells Claude it's a hard limit, and setting a limit below the current result
+  reruns it. Esc cancels the field.
+- `HighlightLayoutManager` only tightens backgrounds that come from the text's own `.backgroundColor`
+  (the diff). Text selection must stay a normal contiguous block.
 - Closing: Esc, ⌘W, ⌥⌘C again, the × in the title bar, or a click anywhere outside the panel (a
   global mouse monitor, installed only while the panel is open). The × isn't in the Lens mock; it
   was added at Tommy's request.

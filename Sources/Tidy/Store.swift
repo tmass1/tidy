@@ -81,6 +81,8 @@ final class Store: ObservableObject {
     @Published var learnFromEdits: Bool { didSet { UserDefaults.standard.set(learnFromEdits, forKey: "learnFromEdits") } }
     @Published var restoreClipboard: Bool { didSet { UserDefaults.standard.set(restoreClipboard, forKey: "restoreClipboard") } }
     @Published var voiceUpdatedAt: Date? { didSet { UserDefaults.standard.set(voiceUpdatedAt, forKey: "voiceUpdatedAt") } }
+    /// Character limits per app, keyed by bundle identifier ("" when there's no source app).
+    @Published var charLimits: [String: Int] { didSet { UserDefaults.standard.set(charLimits, forKey: "charLimits") } }
     @Published private(set) var hasAPIKey: Bool
     @Published var hotKeyRegistered = true
     @Published var settingsTab: SettingsTab = .general
@@ -106,6 +108,7 @@ final class Store: ObservableObject {
         learnFromEdits = defaults.bool(forKey: "learnFromEdits")
         restoreClipboard = defaults.object(forKey: "restoreClipboard") as? Bool ?? true
         voiceUpdatedAt = defaults.object(forKey: "voiceUpdatedAt") as? Date
+        charLimits = defaults.dictionary(forKey: "charLimits") as? [String: Int] ?? [:]
 
         let key = Keychain.read()
         cachedKey = key

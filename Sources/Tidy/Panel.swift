@@ -173,8 +173,10 @@ final class PanelController {
         let key = (event.charactersIgnoringModifiers ?? "").lowercased()
 
         if event.keyCode == UInt16(kVK_Escape) {
-            // Esc steps back: history entry → history list → text → closed.
-            if model.historySelection != nil {
+            // Esc steps back: limit field → history entry → history list → text → closed.
+            if model.editingLimit {
+                model.editingLimit = false
+            } else if model.historySelection != nil {
                 model.historySelection = nil
             } else if model.page != .editor {
                 model.page = .editor
@@ -257,6 +259,7 @@ final class PanelModel: ObservableObject {
         }
     }
     @Published var historySelection: UUID?
+    @Published var editingLimit = false
     @Published var maxTextHeight: CGFloat = 480
     @Published var openToken = UUID()
 
@@ -296,6 +299,19 @@ final class PanelModel: ObservableObject {
     }
 
     var wordCount: Int { hasResult ? result.wordCount : original.wordCount }
+    var characterCount: Int { (hasResult ? result : original).count }
+
+    /// The character limit for the app being written in, if one is set. Remembered per app.
+    var limit: Int? { store.charLimits[limitKey] }
+    var isOverLimit: Bool { limit.map { characterCount > $0 } ?? false }
+    private var limitKey: String { sourceApp?.bundleIdentifier ?? "" }
+
+    /// Sets or clears (nil) the limit. A finished result that's now too long runs again.
+    func setLimit(_ value: Int?) {
+        store.charLimits[limitKey] = value
+        editingLimit = false
+        if let value, hasResult, !isStreaming, result.count > value { run() }
+    }
 
     func reset(original text: String, source: NSRunningApplication?, hadSelection: Bool) {
         cancelRun()
@@ -307,6 +323,7 @@ final class PanelModel: ObservableObject {
         view = .final
         holdingOriginal = false
         page = .editor
+        editingLimit = false
         sourceApp = source
         self.hadSelection = hadSelection
         modeID = store.modes.first?.id
@@ -379,7 +396,7 @@ final class PanelModel: ObservableObject {
         isStreaming = true
 
         let system = Prompts.system(voice: store.useVoice ? store.voiceProfile : nil)
-        let user = Prompts.user(text: base, instruction: instruction, app: sourceName)
+        let user = Prompts.user(text: base, instruction: instruction, app: sourceName, limit: limit)
         let model = store.model
 
         task = Task { [weak self] in
@@ -419,9 +436,10 @@ struct PanelView: View {
     @FocusState private var focus: Field?
     @State private var textHeight: CGFloat = PanelView.minTextHeight
     @State private var originalHeight: CGFloat = 0
+    @State private var limitDraft = ""
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
-    enum Field: Hashable { case tweak, compare }
+    enum Field: Hashable { case tweak, compare, limit }
 
     init(model: PanelModel, store: Store) {
         self.model = model
@@ -664,8 +682,11 @@ struct PanelView: View {
                 .accessibilityElement(children: .combine)
             }
             Spacer(minLength: 0)
-            if model.wordCount > 0 {
-                Text(model.wordCount == 1 ? "1 word" : "\(model.wordCount) words").lineBox(11)
+            if model.editingLimit {
+                limitEditor
+            } else if model.wordCount > 0 || model.limit != nil {
+                CountButton(text: countText, isOver: model.isOverLimit) { model.editingLimit = true }
+                    .help(model.limit == nil ? "Set a character limit" : "Change the character limit")
             }
             IconButton(symbol: "arrow.counterclockwise", label: "Try again", size: 12, box: CGSize(width: 20, height: 18)) { model.run() }
                 .disabled(model.original.trimmed.isEmpty || model.isStreaming)
@@ -674,6 +695,49 @@ struct PanelView: View {
         .foregroundStyle(Color(Theme.muted))
         .padding(.horizontal, 27)
         .padding(.bottom, 15)
+        .onChange(of: model.editingLimit) {
+            guard model.editingLimit else { return }
+            limitDraft = model.limit.map(String.init) ?? ""
+            focus = .limit
+        }
+    }
+
+    /// "164 / 300 characters" with a limit, otherwise the word count.
+    private var countText: String {
+        if let limit = model.limit { return "\(model.characterCount) / \(limit) characters" }
+        return model.wordCount == 1 ? "1 word" : "\(model.wordCount) words"
+    }
+
+    /// Inline in the status line: "Max characters [300]  Clear". ↩ sets it, Esc cancels.
+    private var limitEditor: some View {
+        HStack(spacing: 8) {
+            Text("Max characters").lineBox(11)
+            TextField("Max characters", text: $limitDraft, prompt: Text("None").foregroundColor(Color(Theme.muted)))
+                .textFieldStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(Color(Theme.ink))
+                .multilineTextAlignment(.trailing)
+                .frame(width: 44)
+                .focused($focus, equals: .limit)
+                .onSubmit(applyLimit)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(Color(Theme.accent)).frame(height: 1).offset(y: 3)
+                }
+            if model.limit != nil {
+                CountButton(text: "Clear", isOver: false) { model.setLimit(nil) }
+            }
+        }
+    }
+
+    private func applyLimit() {
+        let digits = limitDraft.filter(\.isNumber)
+        if let value = Int(digits), value > 0 {
+            model.setLimit(value)
+        } else if digits.isEmpty {
+            model.setLimit(nil)
+        } else {
+            model.editingLimit = false
+        }
     }
 
     static func symbol(for bundleID: String?) -> String {
@@ -704,6 +768,28 @@ private struct PanelHeightKey: PreferenceKey {
 }
 
 // MARK: - Small components
+
+/// A quiet 11 pt text button in the status line (the count, Clear). Red when over the limit.
+struct CountButton: View {
+    let text: String
+    let isOver: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .font(.system(size: 11))
+                .lineBox(11)
+                .foregroundStyle(Color(isOver ? Theme.red : hovering ? Theme.ink : Theme.muted))
+                .padding(.horizontal, 4)
+                .background(RoundedRectangle(cornerRadius: 6).fill(hovering ? Color(Theme.layer) : .clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(BareButtonStyle())
+        .onHover { hovering = $0 }
+    }
+}
 
 /// A 32 pt icon button with the quiet hover fill used across the panel.
 struct IconButton: View {
@@ -1080,14 +1166,17 @@ struct ProseView: NSViewRepresentable {
     }
 }
 
-/// Draws background highlights (the diff washes, the selection) as rounded boxes the height
-/// of the text rather than the full, airy line, like an inline CSS background.
+/// Draws the diff's highlight washes as rounded boxes the height of the text rather than the
+/// full, airy line, like an inline CSS background. Text selection keeps the normal solid block.
 final class HighlightLayoutManager: NSLayoutManager {
     override func fillBackgroundRectArray(
         _ rectArray: UnsafePointer<NSRect>, count rectCount: Int,
         forCharacterRange charRange: NSRange, color: NSColor
     ) {
+        // Only text that carries its own background (the diff) is tightened. The selection is
+        // drawn through here too, without that attribute, and must stay one contiguous block.
         guard let storage = textStorage, charRange.location < storage.length,
+              (storage.attribute(.backgroundColor, at: charRange.location, effectiveRange: nil) as? NSColor) == color,
               let font = storage.attribute(.font, at: charRange.location, effectiveRange: nil) as? NSFont else {
             super.fillBackgroundRectArray(rectArray, count: rectCount, forCharacterRange: charRange, color: color)
             return

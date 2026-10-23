@@ -23,9 +23,13 @@ enum Prompts {
         return s
     }
 
-    static func user(text: String, instruction: String, app: String?) -> String {
+    static func user(text: String, instruction: String, app: String?, limit: Int? = nil) -> String {
         var s = "Instruction: \(instruction)\n"
         if let app { s += "Being written in: \(app)\n" }
+        if let limit {
+            s += "Length limit: at most \(limit) characters, counting spaces and line breaks. "
+                + "This is a hard limit. Shorten as much as needed, keeping the most important points.\n"
+        }
         s += "\n<message>\n\(text)\n</message>"
         return s
     }
