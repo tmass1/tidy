@@ -123,6 +123,7 @@ struct GeneralTab: View {
                 CheckboxRow(title: "Open Tidy at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, on in store.setLaunchAtLogin(on) }
                 CheckboxRow(title: "Put my clipboard back after pasting", isOn: $store.restoreClipboard)
+                UpdatesRow(updater: Updater.shared)
             }
             .tabPadding()
         }
@@ -167,6 +168,40 @@ struct GeneralTab: View {
         guard !keyDraft.trimmed.isEmpty else { return }
         store.setAPIKey(keyDraft)
         keyDraft = ""
+    }
+}
+
+/// "Tidy 1.0 · Up to date", with Check for updates or Update and relaunch.
+struct UpdatesRow: View {
+    @ObservedObject var updater: Updater
+
+    var body: some View {
+        SettingRow(title: "Tidy \(updater.currentVersion)", detail: detail, detailIsError: isError) {
+            switch updater.state {
+            case .available:
+                LensButton(title: "Update and relaunch", prominent: true) { Task { await updater.install() } }
+            case .checking, .installing:
+                ProgressView().controlSize(.small)
+            default:
+                LensButton(title: "Check for updates") { Task { await updater.check() } }
+            }
+        }
+    }
+
+    private var detail: String {
+        switch updater.state {
+        case .idle: "Updates come from GitHub."
+        case .checking: "Checking…"
+        case .upToDate: "Up to date"
+        case .available(let release): "Tidy \(release.version) is available."
+        case .installing: "Downloading the update…"
+        case .failed(let message): message
+        }
+    }
+
+    private var isError: Bool {
+        if case .failed = updater.state { return true }
+        return false
     }
 }
 

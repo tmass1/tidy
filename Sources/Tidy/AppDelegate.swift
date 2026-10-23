@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         store.registerHotKey()
 
         if !store.hasAPIKey { showSettings(.general) }
+        Updater.shared.startAutomaticChecks()
         _ = Selection.isTrusted(prompt: true) // asks for Accessibility on first launch
     }
 
@@ -73,6 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addItem(to: menu, "Clean Up Selection     \(store.shortcut.display)", #selector(menuCleanSelection))
         addItem(to: menu, "Clean Up Clipboard", #selector(menuCleanClipboard))
         menu.addItem(.separator())
+        if let release = Updater.shared.available {
+            addItem(to: menu, "Update to Tidy \(release.version)…", #selector(menuUpdates))
+        } else {
+            addItem(to: menu, "Check for Updates…", #selector(menuUpdates))
+        }
         addItem(to: menu, "History…", #selector(menuHistory))
         addItem(to: menu, "Settings…", #selector(menuSettings), key: ",")
         menu.addItem(.separator())
@@ -98,6 +104,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func menuHistory() { showSettings(.history) }
+    @objc private func menuUpdates() {
+        showSettings(.general)
+        if Updater.shared.available == nil { Task { await Updater.shared.check() } }
+    }
     @objc private func menuSettings() { showSettings(.general) }
     @objc private func menuQuit() { NSApp.terminate(nil) }
 
