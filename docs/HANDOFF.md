@@ -38,8 +38,8 @@ _Updated October 23, 2026._
   GitHub", not "open source").
 - **Signing:** builds are signed with Tommy's Developer ID (team Y5V8Y3BH9A), so Accessibility no
   longer resets on rebuild. `release.sh` notarizes and publishes `Tidy.zip` as a GitHub release.
-  **No release has been published yet**: it needs the `tidy-notary` keychain profile first, and until
-  then the site's Download buttons 404.
+  **v1.0 is published** (notarized, stapled; Gatekeeper accepts it as a browser download), and the
+  site's Download buttons serve it. The `tidy-notary` keychain profile is saved on Tommy's Mac.
 - **In-app updates:** `Updater.swift` checks the latest release daily and from Settings › General
   ("Tidy 1.0 · Check for updates") and the menu bar ("Check for Updates…"). Untested end to end until
   a second release exists.
