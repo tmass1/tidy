@@ -64,14 +64,21 @@ if [ "$RELEASE" = 1 ]; then
 fi
 
 echo "==> Installing to /Applications"
+# The Accessibility grant is tied to the signature's team. Note the installed copy's team
+# before replacing it ("" for ad-hoc or none).
+team_of() { codesign -dv "$1" 2>&1 | sed -n 's/^TeamIdentifier=//p' | grep -v "not set" || true; }
+OLD_TEAM="$( [ -d /Applications/Tidy.app ] && team_of /Applications/Tidy.app || echo "none")"
+NEW_TEAM="$(team_of "$APP")"
 pkill -x Tidy 2>/dev/null || true
 sleep 0.5
 rm -rf /Applications/Tidy.app
 ditto "$APP" /Applications/Tidy.app
 
-if [ -z "$IDENTITY" ]; then
-  # An ad-hoc build has a new signature every time, so macOS ignores the old Accessibility
-  # grant. Clear it so Tidy asks again cleanly instead of silently failing.
+if [ -z "$NEW_TEAM" ] || [ "$OLD_TEAM" != "$NEW_TEAM" ]; then
+  # An ad-hoc build has a new signature every time, and switching between ad-hoc and Developer ID
+  # changes it too. Either way macOS ignores the old grant while still showing Tidy switched on,
+  # so clear it and let Tidy ask again cleanly.
+  echo "    Signature changed: resetting Tidy's Accessibility permission"
   tccutil reset Accessibility com.tommymassaro.tidy >/dev/null 2>&1 || true
 fi
 
