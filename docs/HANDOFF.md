@@ -34,8 +34,9 @@ Defaults chosen during implementation, all open to change:
 _Updated October 23, 2026._
 
 - **Public** at https://github.com/tmass1/tidy. Landing page in `site/`, deployed to
-  https://tidy-app.tommymassaro.com by the Pages workflow (custom domain; DNS is a CNAME on Cloudflare
-  to tmass1.github.io). No LICENSE yet (so the page says "source on
+  https://tidy-app.tommymassaro.com by a static-assets Cloudflare Worker (`wrangler.jsonc`), like
+  Tommy's other sites; `wrangler deploy` publishes it and Cloudflare manages the DNS record. GitHub
+  Pages is turned off. No LICENSE yet (so the page says "source on
   GitHub", not "open source").
 - **Signing:** builds are signed with Tommy's Developer ID (team Y5V8Y3BH9A), so Accessibility no
   longer resets on rebuild. `release.sh` notarizes and publishes `Tidy.zip` as a GitHub release.

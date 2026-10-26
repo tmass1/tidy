@@ -25,7 +25,9 @@ every rebuild.
 publishes a GitHub release. The app's updater and the landing page's Download button both use the
 latest release. See the top of `release.sh` for the one-time notarization setup.
 
-The landing page lives in `site/` and deploys to GitHub Pages on every push that changes it.
+The landing page lives in `site/` and is served at https://tidy-app.tommymassaro.com by a static-assets
+Cloudflare Worker (`wrangler.jsonc`), like the other tommymassaro.com sites. Publish changes with
+`wrangler deploy`.
 
 ## In the panel
 

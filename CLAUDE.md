@@ -21,6 +21,7 @@ about polish; treat UI details as product decisions, not afterthoughts.
 ```bash
 bash build.sh            # compile (release, arm64), bundle Tidy.app, sign, install to /Applications, launch
 bash release.sh 1.1      # signed + notarized Tidy.zip, tag v1.1, GitHub release (the updater's source)
+wrangler deploy          # publish site/ to tidy-app.tommymassaro.com (Cloudflare Worker, custom domain)
 swift build              # compile only (fast check while iterating)
 tail -50 build.log       # build.sh writes all its output here
 log stream --predicate 'process == "Tidy"' --level debug   # runtime logs (NSLog)
@@ -34,7 +35,8 @@ Requires Apple's command line tools (`xcode-select --install`). Full Xcode isn't
 Package.swift
 build.sh                     build + bundle + sign (Developer ID if present, else ad-hoc) + install
 release.sh                   version bump, notarize, tag, `gh release create` with Tidy.zip
-site/                        landing page (static HTML, Lens tokens), deployed by .github/workflows/pages.yml
+site/                        landing page (static HTML, Lens tokens) at tidy-app.tommymassaro.com
+wrangler.jsonc               static-assets Cloudflare Worker serving site/; `wrangler deploy` publishes it
 Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tommymassaro.tidy
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
