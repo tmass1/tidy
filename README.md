@@ -4,7 +4,7 @@ Clean up any message before you send it. Select text in any app, press **⌥⌘C
 streams a cleaned-up version from Claude with the changes highlighted. **⌘↩** puts it back
 in place of your selection.
 
-**Download:** https://tmass1.github.io/tidy/ (macOS 14+, Apple Silicon). Tidy updates itself from
+**Download:** https://tidy-app.tommymassaro.com (macOS 14+, Apple Silicon). Tidy updates itself from
 the [latest release](https://github.com/tmass1/tidy/releases/latest).
 
 ## Build & install from source

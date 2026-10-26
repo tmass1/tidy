@@ -1,4 +1,5 @@
-# Publishes the landing page in site/ to GitHub Pages (https://tmass1.github.io/tidy/).
+# Publishes the landing page in site/ to GitHub Pages at https://tidy-app.tommymassaro.com
+# (custom domain set in the repo's Pages settings; DNS is a CNAME to tmass1.github.io on Cloudflare).
 name: Landing page
 
 on:
