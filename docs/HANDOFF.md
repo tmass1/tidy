@@ -101,7 +101,7 @@ Panel
 - [ ] Changes view: deletions struck through in red, insertions in green; readable in light and dark mode
 - [ ] Final is the default view and is editable; the word count follows edits; Tab moves to the refine field
 - [ ] Hold for original (mouse, or Space when focused) shows the draft and releases back without the panel jumping
-- [ ] Tweak field + ↩ reworks the current result
+- [ ] The tray's one field + ↩ reworks the current version and adds a step; the trail shows after the first change; clicking a step goes back; the bookmark saves the steps as a mode
 - [ ] ⌘⇧C copies; ⌘R reruns; ⌘D toggles views; ⌘C/V/X/A/Z work inside the text fields
 - [ ] Error states read well: no key, bad key (401), offline, and an empty selection
 - [ ] Panel fits its text (grows downward, long text scrolls), drags by its title bar, opens on the screen with the mouse

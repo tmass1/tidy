@@ -246,6 +246,16 @@ final class PanelModel: ObservableObject {
     enum CommitAction { case replace, copy }
     enum Page: Hashable { case editor, settings }
 
+    /// One version of the text in the trail: what the mode made, or what one of your changes made.
+    struct Step: Identifiable, Equatable {
+        let id = UUID()
+        let label: String        // "Clean up", "mention Friday"
+        let instruction: String  // the mode's instruction, or the change as you typed it
+        let text: String
+    }
+
+    enum StepKind { case mode(Mode), change(String) }
+
     @Published var original = ""
     @Published var result = ""
     @Published var isStreaming = false
@@ -262,6 +272,11 @@ final class PanelModel: ObservableObject {
     }
     @Published var historySelection: UUID?
     @Published var editingLimit = false
+    /// The trail: the mode's version, then one per change. `currentStep` is the one showing.
+    @Published private(set) var steps: [Step] = []
+    @Published private(set) var currentStep = 0
+    /// A short confirmation in the status line ("Saved as a mode…"); clears itself.
+    @Published private(set) var notice: String?
     @Published var maxTextHeight: CGFloat = 480
     @Published var openToken = UUID()
 
@@ -293,6 +308,7 @@ final class PanelModel: ObservableObject {
     var status: (text: String, isError: Bool)? {
         if let error { return (error, true) }
         if isStreaming { return ("Refining your words…", false) }
+        if let notice { return (notice, false) }
         guard hasResult else { return nil }
         if result.trimmed == original.trimmed { return ("Looks good already", false) }
         if hadSelection { return ("Ready to replace", false) }
@@ -325,6 +341,9 @@ final class PanelModel: ObservableObject {
         holdingOriginal = false
         page = .editor
         editingLimit = false
+        steps = []
+        currentStep = 0
+        notice = nil
         sourceApp = source
         self.hadSelection = hadSelection
         modeID = store.modes.first?.id
@@ -339,7 +358,7 @@ final class PanelModel: ObservableObject {
 
     func run() {
         guard let mode = currentMode else { return }
-        start(base: original, instruction: mode.instruction)
+        start(base: original, instruction: mode.instruction, step: .mode(mode))
     }
 
     func runAfterPaste() {
@@ -351,7 +370,53 @@ final class PanelModel: ObservableObject {
         guard !change.isEmpty else { return }
         let base = result.trimmed.isEmpty ? original : result
         tweak = ""
-        start(base: base, instruction: Prompts.tweakInstruction(change))
+        start(base: base, instruction: Prompts.tweakInstruction(change), step: .change(change))
+    }
+
+    /// The trail shows once there's at least one change on top of the mode's version.
+    var showsTrail: Bool { steps.count > 1 }
+
+    /// Clicking a step in the trail goes back to that version. A change typed next builds on it
+    /// (and the later steps drop off).
+    func goToStep(_ index: Int) {
+        guard !isStreaming, steps.indices.contains(index) else { return }
+        currentStep = index
+        suggestion = steps[index].text
+        result = steps[index].text
+        view = .final
+        error = nil
+    }
+
+    /// Saves the trail up to the step showing as a new mode: the mode's instruction plus your
+    /// changes, in order. It can be renamed in Settings › Modes.
+    func saveStepsAsMode() {
+        let kept = steps.prefix(currentStep + 1)
+        guard kept.count > 1, let first = kept.first else { return }
+        let changes = kept.dropFirst().map(\.instruction)
+        let instruction = first.instruction + " Then make these changes: " + changes.joined(separator: "; ") + "."
+        var name = ([first.label] + changes).joined(separator: " + ")
+        if name.count > 40 { name = String(name.prefix(39)) + "…" }
+        store.modes.append(Mode(name: name, instruction: instruction))
+        showNotice("Saved as a mode. Rename it in Settings › Modes.")
+    }
+
+    private func showNotice(_ text: String) {
+        notice = text
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
+            if self.notice == text { self.notice = nil }
+        }
+    }
+
+    func record(_ kind: StepKind, _ text: String) {
+        switch kind {
+        case .mode(let mode):
+            steps = [Step(label: mode.name, instruction: mode.instruction, text: text)]
+        case .change(let change):
+            let kept = steps.isEmpty ? [] : Array(steps.prefix(currentStep + 1))
+            steps = kept + [Step(label: change, instruction: change, text: text)]
+        }
+        currentStep = steps.count - 1
     }
 
     func openSettings(_ tab: SettingsTab) {
@@ -399,7 +464,7 @@ final class PanelModel: ObservableObject {
         }
     }
 
-    private func start(base: String, instruction: String) {
+    private func start(base: String, instruction: String, step: StepKind) {
         guard !base.trimmed.isEmpty else { return }
         guard let key = store.apiKey else {
             error = "Add your Anthropic API key in Settings (⌘,)."
@@ -407,6 +472,7 @@ final class PanelModel: ObservableObject {
         }
         cancelRun()
         error = nil
+        notice = nil
         result = ""
         view = .final
         isStreaming = true
@@ -427,7 +493,11 @@ final class PanelModel: ObservableObject {
                 self.suggestion = finished
                 self.result = finished
                 self.isStreaming = false
-                if finished.isEmpty { self.error = "Claude returned an empty response. Press ⌘R to try again." }
+                if finished.isEmpty {
+                    self.error = "Claude returned an empty response. Press ⌘R to try again."
+                } else {
+                    self.record(step, finished)
+                }
             } catch {
                 guard let self, !Task.isCancelled else { return }
                 self.isStreaming = false
@@ -443,7 +513,7 @@ struct PanelView: View {
     static let width: CGFloat = 602
     static let minTextHeight: CGFloat = 215
     /// Everything except the text area, used to cap the text so the panel fits on screen.
-    static let chromeHeight: CGFloat = 320
+    static let chromeHeight: CGFloat = 350
     /// Width minus the 1 pt border and 33 pt padding on each side.
     static let textWidth: CGFloat = width - 68
 
@@ -470,11 +540,7 @@ struct PanelView: View {
                 editorHeader
                 content
                 modes
-                VStack(spacing: 0) {
-                    command
-                    subfooter
-                }
-                .background(Color(Theme.soft))
+                tray
             case .settings:
                 SettingsPage(model: model, store: store, maxHeight: pageMaxHeight)
             }
@@ -554,7 +620,7 @@ struct PanelView: View {
         return HoldButton(holding: holding) {
             HStack(spacing: 6) {
                 Image(systemName: "text.viewfinder").font(.system(size: 12))
-                Text("Hold for original").font(.system(size: 11)).lineBox(11)
+                Text("Original").font(.system(size: 11)).lineBox(11)
             }
         }
         .gesture(
@@ -651,39 +717,93 @@ struct PanelView: View {
         }
     }
 
-    // Refinement field and the replace action
+    // The control tray: the trail of steps (after a change), one field, then status and Replace.
 
-    private var command: some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 9) {
-                Image(systemName: "arrow.turn.down.right")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color(Theme.accent))
-                    .accessibilityHidden(true)
-                TextField(
-                    "Refine your text", text: $model.tweak,
-                    prompt: Text("A little warmer? Mention Friday?").foregroundColor(Color(Theme.muted))
-                )
-                .textFieldStyle(.plain)
-                .font(.system(size: 13))
-                .lineBox(13)
-                .padding(.vertical, 6)
-                .focused($focus, equals: .tweak)
-                .onSubmit { model.runTweak() }
-                IconButton(symbol: "arrow.up", label: "Apply refinement") { model.runTweak() }
-            }
-            .disabled(model.isStreaming || (model.result.isEmpty && model.original.trimmed.isEmpty))
-            PrimaryButton(title: model.replaceTitle) { model.commit(.replace) }
-                .disabled(!model.canCommit)
+    private var tray: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if model.showsTrail { trail }
+            field
+            actionRow
         }
-        .padding(.vertical, 17)
+        .padding(.top, model.showsTrail ? 12 : 16)
+        .padding(.bottom, 16)
         .padding(.horizontal, 25)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(Theme.soft))
     }
 
-    private var subfooter: some View {
+    /// "Clean up › warmer close › mention Friday": each step is a version you can go back to.
+    /// Long trails keep the first step and the last three.
+    private var trail: some View {
+        let count = model.steps.count
+        let shown: [Int?] = count > 5 ? [0, nil] + Array(count - 3..<count).map { $0 } : Array(0..<count).map { $0 }
+        return HStack(spacing: 3) {
+            ForEach(Array(shown.enumerated()), id: \.offset) { position, index in
+                if position > 0 {
+                    Text("›").foregroundStyle(Color(Theme.muted).opacity(0.6)).accessibilityHidden(true)
+                }
+                if let index {
+                    TrailStep(title: model.steps[index].label, current: index == model.currentStep) {
+                        model.goToStep(index)
+                    }
+                } else {
+                    Text("…").foregroundStyle(Color(Theme.muted)).padding(.horizontal, 6)
+                }
+            }
+            Spacer(minLength: 0)
+            IconButton(symbol: "bookmark", label: "Save these steps as a mode", size: 13, box: CGSize(width: 28, height: 28)) {
+                model.saveStepsAsMode()
+            }
+            .foregroundStyle(Color(Theme.muted))
+            .padding(.trailing, -7)
+        }
+        .font(.system(size: 12))
+        .padding(.leading, -8)
+        .disabled(model.isStreaming)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Steps so far")
+    }
+
+    /// The one place to type: a change to the version showing, or anything you want done.
+    private var field: some View {
+        let empty = model.tweak.trimmed.isEmpty
+        return HStack(spacing: 9) {
+            Image(systemName: "arrow.turn.down.right")
+                .font(.system(size: 14))
+                .foregroundStyle(Color(Theme.accent))
+                .accessibilityHidden(true)
+            TextField(
+                "Change anything", text: $model.tweak,
+                prompt: Text(model.showsTrail
+                             ? "Anything else? \u{201C}shorter\u{201D}, \u{201C}add the Figma link\u{201D}\u{2026}"
+                             : "Change anything: \u{201C}warmer close\u{201D}, \u{201C}mention Friday\u{201D}\u{2026}")
+                    .foregroundColor(Color(Theme.muted))
+            )
+            .textFieldStyle(.plain)
+            .font(.system(size: 13))
+            .focused($focus, equals: .tweak)
+            .onSubmit { model.runTweak() }
+            IconButton(symbol: "arrow.up", label: "Apply", size: 13, box: CGSize(width: 30, height: 30)) { model.runTweak() }
+                .foregroundStyle(Color(empty ? Theme.muted : Theme.ink))
+        }
+        .padding(.leading, 13)
+        .padding(.trailing, 7)
+        .frame(height: 46)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(Theme.well)))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color(focus == .tweak ? Theme.accent : Theme.wellBorder), lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { focus = .tweak }
+        .disabled(model.isStreaming || (model.result.isEmpty && model.original.trimmed.isEmpty))
+    }
+
+    /// "● Ready to replace · 27 words" (the count sets a character limit), then Replace.
+    private var actionRow: some View {
         HStack(spacing: 10) {
-            if let status = model.status {
-                HStack(spacing: 6) {
+            HStack(spacing: 6) {
+                if let status = model.status {
                     Circle()
                         .fill(Color(status.isError ? Theme.red : Theme.green))
                         .frame(width: 4, height: 4)
@@ -692,23 +812,23 @@ struct PanelView: View {
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineBox(11)
+                        .accessibilityElement(children: .combine)
                 }
-                .accessibilityElement(children: .combine)
+                if model.editingLimit {
+                    limitEditor.padding(.leading, model.status == nil ? 0 : 6)
+                } else if model.wordCount > 0 || model.limit != nil {
+                    if model.status != nil { Text("·").accessibilityHidden(true) }
+                    CountButton(text: countText, isOver: model.isOverLimit) { model.editingLimit = true }
+                        .help(model.limit == nil ? "Set a character limit" : "Change the character limit")
+                        .padding(.leading, -4)
+                }
             }
             Spacer(minLength: 0)
-            if model.editingLimit {
-                limitEditor
-            } else if model.wordCount > 0 || model.limit != nil {
-                CountButton(text: countText, isOver: model.isOverLimit) { model.editingLimit = true }
-                    .help(model.limit == nil ? "Set a character limit" : "Change the character limit")
-            }
-            IconButton(symbol: "arrow.counterclockwise", label: "Try again", size: 12, box: CGSize(width: 20, height: 18)) { model.run() }
-                .disabled(model.original.trimmed.isEmpty || model.isStreaming)
+            PrimaryButton(title: model.replaceTitle) { model.commit(.replace) }
+                .disabled(!model.canCommit)
         }
         .font(.system(size: 11))
         .foregroundStyle(Color(Theme.muted))
-        .padding(.horizontal, 27)
-        .padding(.bottom, 15)
         .onChange(of: model.editingLimit) {
             guard model.editingLimit else { return }
             limitDraft = model.limit.map(String.init) ?? ""
@@ -782,6 +902,34 @@ private struct PanelHeightKey: PreferenceKey {
 }
 
 // MARK: - Small components
+
+/// A step in the trail: muted, the current one on a soft fill. Click to go back to it.
+struct TrailStep: View {
+    let title: String
+    let current: Bool
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: 170, alignment: .leading)
+                .fixedSize()
+                .lineBox(12)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .foregroundStyle(Color(current || hovering ? Theme.ink : Theme.muted))
+                .background(RoundedRectangle(cornerRadius: 7).fill(current || hovering ? Color(Theme.layer) : .clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(BareButtonStyle())
+        .onHover { hovering = $0 }
+        .help(current ? "Showing this version" : "Go back to this version")
+        .accessibilityAddTraits(current ? .isSelected : [])
+    }
+}
 
 /// A quiet 11 pt text button in the status line (the count, Clear). Red when over the limit.
 struct CountButton: View {

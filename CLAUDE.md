@@ -65,7 +65,8 @@ Sources/Tidy/
 4. `PanelModel.start()` streams from `Claude.stream`; `Prompts.clean(_, streaming: true)` strips
    wrapper tags and fences as text arrives.
 5. Text streams into the Final view. When it finishes, Final is editable and Changes shows the diff
-   (`Styled.diff`); holding "Hold for original" (or Space on it) shows the draft.
+   (`Styled.diff`); holding "Original" (or Space on it) shows the draft. Anything typed in the tray's
+   one field reworks the version showing and adds a step to the trail (`PanelModel.steps`).
 6. ⌘↩ → `PanelModel.commit(.replace)` saves a HistoryItem → `PanelController.replace()` closes the
    panel, makes sure the source app is frontmost, then `Selection.paste()` posts ⌘V and restores the clipboard.
 
@@ -139,6 +140,12 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   text → closed). There's no mock for the tabs, so they're built from the panel's parts (`SettingRow`,
   `CheckboxRow`, `LensField`, `LensButton`, `SmallButton`). Modes and History drill in (list → item) to
   fit the 602 pt width. Clicking outside the panel doesn't close it while Settings is showing.
+- **Control tray** (the bottom of the editor): mode chips stay on their own row above it; inside it are
+  the trail of steps (only once there's a change), the one text field (`Theme.well`), and the status line
+  with Replace. A mode run starts a new trail; each typed change adds a step built on the version showing
+  (`PanelModel.record`); clicking a step goes back to it (`goToStep`) and later steps drop off on the next
+  change; the bookmark saves the steps up to the current one as a mode (`saveStepsAsMode`). Trails longer
+  than five collapse to first › … › last three. This came from the "V4" mock on the design canvas.
 - Character limit: click the count in the status line to set "Max characters" for the current app
   (`Store.charLimits`, keyed by bundle id). With a limit the count reads "164 / 300 characters" (red when
   over), `Prompts.user` tells Claude it's a hard limit, and setting a limit below the current result
