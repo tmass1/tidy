@@ -233,8 +233,26 @@
   .mode-panel { border-radius: 22px; background: var(--glass); box-shadow: 0 30px 60px -24px #2720364d, inset 0 0 0 1px var(--rim); padding: 26px 30px 24px; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
   .mode-panel .from { font-size: 13px; color: var(--muted); margin: 0 0 6px; }
   .mode-panel .draft { font-size: 15px; line-height: 1.6; color: var(--muted); margin: 0 0 20px; padding-bottom: 20px; border-bottom: 1px solid var(--rule); }
-  .mode-panel .out { font-size: 22px; line-height: 1.55; letter-spacing: -0.55px; margin: 0; min-height: 6.2em; transition: opacity .18s; }
-  .mode-panel .out.fade { opacity: 0; }
+  .mode-panel .out { font-size: 22px; line-height: 1.55; letter-spacing: -0.55px; margin: 0; min-height: 6.2em; }
+  /* Switching modes plays the app's own sequence: the last version ghosts with a lavender sweep while
+     Claude reads, then the new one streams in word by word. */
+  .mode-panel .out.reading, .mode-panel.writing .mode-status {
+    color: transparent; -webkit-background-clip: text; background-clip: text;
+    background-image: linear-gradient(100deg, var(--ghost) 42%, var(--accent) 50%, var(--ghost) 58%);
+    background-size: 300% 100%; animation: sweep 1.8s linear infinite;
+  }
+  .mode-panel .out.reading { --ghost: color-mix(in srgb, var(--muted) 55%, transparent); }
+  .mode-panel.writing .mode-status { --ghost: var(--muted); }
+  .mode-panel .out .w { animation: ink .45s ease-out both; }
+  .mode-panel.writing .foot::before { background: var(--accent); animation: pulse 1s ease-in-out infinite alternate; }
+  @keyframes pulse { to { opacity: .3; } }
+  /* While the section cycles through the modes on its own, the selected chip shows how long until the next. */
+  .mode-list button { position: relative; overflow: hidden; }
+  .mode-list.dwell button[aria-pressed="true"]::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); opacity: .45;
+    transform-origin: left; animation: dwell 4.2s linear both;
+  }
+  @keyframes dwell { from { transform: scaleX(0); } }
   .mode-panel .foot { display: flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 12px; color: var(--muted); }
   .mode-panel .foot::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
 
@@ -809,7 +827,7 @@
       <div class="mode-panel">
         <p class="from">Your draft</p>
         <p class="draft">hey so the vendor pushed delivery again. we wont have the units till the 30th which means launch slips a week. not ideal but i think we can make it work if marketing moves the email</p>
-        <p class="out" aria-live="polite">Hey, the vendor pushed delivery again. We won’t have the units until the 30th, so the launch slips a week. Not ideal, but I think we can make it work if marketing moves the email.</p>
+        <p class="out">Hey, the vendor pushed delivery again. We won’t have the units until the 30th, so the launch slips a week. Not ideal, but I think we can make it work if marketing moves the email.</p>
         <p class="foot"><span class="mode-status">Ready to replace · 35 words</span></p>
       </div>
     </div>
@@ -1164,7 +1182,8 @@
   update();
 })();
 
-// The modes section: the same draft as each built-in mode would rewrite it.
+// The modes section: the same draft as each built-in mode would rewrite it. It cycles through the modes
+// on its own while on screen until someone picks one; each switch reads, then streams, like the app.
 (() => {
   const outs = [
     'Hey, the vendor pushed delivery again. We won’t have the units until the 30th, so the launch slips a week. Not ideal, but I think we can make it work if marketing moves the email.',
@@ -1173,20 +1192,82 @@
     'Hey, quick heads-up: the vendor pushed delivery again, so the units won’t arrive until the 30th and launch slips a week. Not ideal, but I think we can still make it work if marketing can move the email.',
     'The vendor has delayed delivery again, and the units will now arrive on the 30th. That moves the launch back one week. If marketing can reschedule the email, we can keep the plan intact.',
   ];
-  const buttons = document.querySelectorAll('.mode-list button');
-  const out = document.querySelector('.mode-panel .out');
-  const status = document.querySelector('.mode-status');
+  const panel = document.querySelector('.mode-panel');
+  const list = document.querySelector('.mode-list');
+  const buttons = [...list.querySelectorAll('button')];
+  const out = panel.querySelector('.out');
+  const status = panel.querySelector('.mode-status');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const words = s => s.trim().split(/\s+/).length;
-  buttons.forEach(b => b.addEventListener('click', () => {
-    buttons.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    const text = outs[+b.dataset.mode];
-    out.classList.add('fade');
-    setTimeout(() => {
-      out.textContent = text;
-      status.textContent = `Ready to replace · ${words(text)} words`;
-      out.classList.remove('fade');
-    }, 160);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let run = 0, current = 0, auto = !reduce, visible = false, busy = false, timer;
+
+  // Reserve room for the longest rewrite so the panel doesn't change height between modes.
+  const fit = () => {
+    if (busy) return;
+    out.style.minHeight = '';
+    let h = 0;
+    for (const t of outs) { out.textContent = t; h = Math.max(h, out.offsetHeight); }
+    out.textContent = outs[current];
+    out.style.minHeight = h + 'px';
+  };
+  fit();
+  addEventListener('resize', fit);
+  document.fonts?.ready.then(fit);
+
+  const next = () => {
+    clearTimeout(timer);
+    list.classList.remove('dwell');
+    if (!auto || !visible || busy) return;
+    void list.offsetWidth; // restart the chip's progress line
+    list.classList.add('dwell');
+    timer = setTimeout(() => show((current + 1) % outs.length), 4200);
+  };
+
+  async function show(i) {
+    const id = ++run;
+    current = i; clearTimeout(timer); list.classList.remove('dwell');
+    buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
+    const text = outs[i];
+    if (reduce) { out.textContent = text; status.textContent = `Ready to replace · ${words(text)} words`; return; }
+    busy = true;
+    out.setAttribute('aria-busy', 'true');
+    panel.classList.add('writing');
+    status.textContent = 'Writing…';
+    out.classList.add('reading');
+    await sleep(700);
+    if (id !== run) return;
+    out.classList.remove('reading');
+    out.textContent = '';
+    const parts = text.match(/\S+\s*/g);
+    for (let k = 0; k < parts.length;) {
+      const n = 1 + Math.floor(Math.random() * 3);
+      const span = document.createElement('span');
+      span.className = 'w';
+      span.textContent = parts.slice(k, k + n).join('');
+      out.append(span);
+      k += n;
+      await sleep(45 + Math.random() * 45);
+      if (id !== run) return;
+    }
+    panel.classList.remove('writing');
+    out.removeAttribute('aria-busy');
+    status.textContent = `Ready to replace · ${words(text)} words`;
+    busy = false;
+    next();
+  }
+
+  buttons.forEach((b, i) => b.addEventListener('click', () => {
+    auto = false; // someone's trying it: stop cycling and let them drive
+    out.setAttribute('aria-live', 'polite');
+    busy = false;
+    show(i);
   }));
+
+  new IntersectionObserver(([e]) => {
+    visible = e.isIntersecting;
+    if (visible) next(); else { clearTimeout(timer); list.classList.remove('dwell'); }
+  }, { threshold: 0.5 }).observe(panel);
 })();
 </script>
 <script>
