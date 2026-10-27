@@ -160,7 +160,8 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 
 ## Landing page (keep it in step with the app)
 
-- `site/index.html` is **light only** (no dark-mode styles). Headlines use Newsreader, self-hosted in
+- `site/index.html` is **light only** (no dark-mode styles), except the footer (`.site-foot`), which uses the
+  app's dark `Theme` colors scoped to itself and links to Tidy UI and tommymassaro.com. Headlines use Newsreader, self-hosted in
   `site/assets/fonts/` (OFL); everything else is the system font, like the app. The page makes no
   third-party requests.
 - The hero (`.demo`) is a hand-built HTML copy of the panel, animated by a small inline script: select a

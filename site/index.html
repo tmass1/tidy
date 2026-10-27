@@ -110,6 +110,13 @@
     -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8);
     box-shadow: 0 0 0 1px #aca2bd2e, 0 12px 32px -16px #27203647;
   }
+  /* Over the dark footer the bar turns dark glass too. */
+  .bar.on-dark .top { background: #1f1c27b8; border-color: #ffffff17; box-shadow: 0 0 0 1px #00000040, 0 12px 32px -16px #00000080; }
+  .bar.on-dark .wordmark { color: #f0eef7; }
+  .bar.on-dark .top nav a:not(.button) { color: #b6b1c4; }
+  .bar.on-dark .top nav a:not(.button):hover { color: #f0eef7; }
+  .bar.on-dark .button { background: #eeebf6; color: #282432; }
+  .bar .wordmark, .bar .top nav a, .bar .button { transition: color .25s, background-color .25s; }
   section[id] { scroll-margin-top: 84px; }
   .wordmark { font-size: 28px; font-weight: 650; letter-spacing: -1.35px; line-height: 1; text-decoration: none; }
   .top nav { margin-left: auto; display: flex; align-items: center; gap: 28px; font-size: 14px; }
@@ -133,6 +140,24 @@
   .text-link:hover { color: var(--ink); }
   .text-link span { transition: transform .15s; display: inline-block; }
   .text-link:hover span { transform: translateX(2px); }
+
+  /* Hero mesh: the wallpaper's lavender, sky, peach and mint as soft blobs drifting behind the fold.
+     Transform-only animation; it pauses offscreen (the script toggles .play) and stays still with reduced motion. */
+  .hero-mesh {
+    position: absolute; inset: 0 0 auto; height: 1050px; z-index: -1; overflow: hidden; pointer-events: none;
+    -webkit-mask-image: linear-gradient(#000 35%, #0000 95%); mask-image: linear-gradient(#000 35%, #0000 95%);
+  }
+  .hero-mesh i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; will-change: transform; animation: drift 28s ease-in-out infinite alternate paused; }
+  .hero-mesh.play i { animation-play-state: running; }
+  .hero-mesh i:nth-child(1) { width: 46vw; height: 34vw; left: 4vw; top: 40px; background: #d9d0ff; }
+  .hero-mesh i:nth-child(2) { width: 40vw; height: 30vw; right: 2vw; top: -60px; background: #cfe3f6; animation-duration: 34s; animation-delay: -9s; }
+  .hero-mesh i:nth-child(3) { width: 38vw; height: 28vw; right: 10vw; top: 420px; background: #f7dccf; opacity: .45; animation-duration: 31s; animation-delay: -17s; }
+  .hero-mesh i:nth-child(4) { width: 34vw; height: 26vw; left: 12vw; top: 520px; background: #d3eedf; opacity: .5; animation-duration: 37s; animation-delay: -5s; }
+  @keyframes drift {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(6vw, 4vw) scale(1.12); }
+    100% { transform: translate(-4vw, 7vw) scale(.94); }
+  }
 
   /* Hero */
   /* Centered pitch over the demo at the panel's real size (602 pt), then captions that follow the demo. */
@@ -435,18 +460,78 @@
   .needs a { color: var(--accent-ink); text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 3px; }
 
   /* Closing */
-  .closing { padding-top: 0; padding-bottom: 120px; }
+  .closing { padding-top: 0; padding-bottom: 96px; }
   .closing .desk { padding: 96px 40px; text-align: center; }
   .closing h2 { font-size: 64px; margin-bottom: 16px; }
   .closing p { color: var(--body); margin: 0 0 36px; font-size: 18px; }
   .closing .actions { justify-content: center; }
 
-  footer { padding: 0 0 48px; font-size: 13px; color: var(--muted); }
-  footer .wrap { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
-  footer .wordmark { font-size: 18px; color: var(--ink); }
-  footer a { color: var(--muted); text-decoration: none; }
-  footer a:hover { color: var(--ink); }
-  footer .spacer { flex: 1; }
+  /* Footer: the app's dark Lens palette (Theme.swift, dark), scoped here; the rest of the page stays light. */
+  .site-foot {
+    --ink: #f0eef7; --body: #cfcadb; --muted: #b6b1c4; --rule: #b9aaca25; --accent: #bcabff; --accent-soft: #393047;
+    --green: #a3d8b9; --green-wash: #273e33; --green-line: #a3d8b966; --red: #f1afb7; --red-wash: #472f36;
+    position: relative; overflow: hidden; border-radius: 32px 32px 0 0; padding-top: 104px; color: var(--muted);
+    background:
+      radial-gradient(50% 60% at 88% 0%, #6350c540, transparent 70%),
+      radial-gradient(40% 50% at 4% 30%, #2862482e, transparent 70%),
+      #16141c;
+  }
+  .site-foot a { color: inherit; text-decoration: none; }
+  .site-foot a:focus-visible { outline-color: var(--accent); }
+  .foot-line { font-family: var(--serif); font-weight: 400; font-size: 46px; line-height: 1.12; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 64px; max-width: 15em; text-wrap: balance; }
+  .foot-line del, .foot-line ins { border-radius: 6px; padding: 0 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .foot-line del { color: var(--red); background: var(--red-wash); text-decoration: line-through var(--red) 2px; }
+  .foot-line ins { display: inline-block; vertical-align: bottom; overflow: hidden; white-space: nowrap; max-width: 13em; color: var(--green); background: var(--green-wash); text-decoration: underline var(--green-line) 2px; text-underline-offset: 7px; font-style: italic; }
+  .site-foot.played .foot-line del { animation: f-del 1s .5s ease-out both; }
+  .site-foot.played .foot-line ins { animation: f-ins 1s 1.3s cubic-bezier(.3, .7, .3, 1) both; }
+  @keyframes f-del { from { color: var(--ink); background: #0000; text-decoration-color: #0000; } }
+  @keyframes f-ins { from { max-width: 0; padding: 0; } }
+
+  .foot-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .foot-card {
+    display: flex; align-items: center; gap: 22px; padding: 12px 24px 12px 12px; border-radius: 20px;
+    background: #ffffff08; box-shadow: inset 0 0 0 1px #ffffff12;
+    transition: background-color .25s, box-shadow .25s, transform .25s;
+  }
+  .foot-card:hover { background: #ffffff0d; box-shadow: inset 0 0 0 1px #bcabff40; transform: translateY(-2px); }
+  .foot-card .art { position: relative; flex: none; width: 148px; height: 112px; border-radius: 12px; overflow: hidden; background: #0f0e14; box-shadow: inset 0 0 0 1px #ffffff0d; display: grid; place-items: center; align-content: center; gap: 12px; }
+  .foot-card .text { min-width: 0; }
+  .foot-card .eyebrow { display: block; font-size: 12px; color: var(--accent); margin-bottom: 2px; }
+  .foot-card h3 { display: flex; align-items: baseline; gap: 8px; font-family: var(--serif); font-weight: 420; font-size: 24px; letter-spacing: -0.012em; color: var(--ink); margin: 0 0 4px; }
+  .foot-card h3 b { font-family: var(--sans); font-weight: 400; font-size: 15px; color: var(--muted); transition: transform .25s, color .25s; }
+  .foot-card:hover h3 b { color: var(--ink); transform: translate(2px, -2px); }
+  .foot-card p { font-size: 14px; line-height: 1.5; color: var(--body); margin: 0; }
+
+  /* Tidy UI: the dark theme's colors and a chip, fanning out on hover. */
+  .ui-art .swatches { display: flex; }
+  .ui-art .swatches i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2.5px #0f0e14; margin-left: -6px; transition: margin .35s cubic-bezier(.2, .8, .2, 1); }
+  .ui-art .swatches i:first-child { margin-left: 0; }
+  .foot-card:hover .ui-art .swatches i { margin-left: 3px; }
+  .foot-card:hover .ui-art .swatches i:first-child { margin-left: 0; }
+  .ui-art .chip { padding: 3px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap; background: var(--accent-soft); color: var(--accent); }
+  .ui-art .chip small { opacity: .6; margin-left: 4px; font-size: 10px; }
+
+  /* Tommy: a monogram in a lavender, mint and rose ring that turns on hover. */
+  .me-art .ring { position: relative; width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center; }
+  .me-art .ring::before { content: ""; position: absolute; inset: 0; border-radius: 50%; padding: 1.5px; background: conic-gradient(from 0deg, #bcabff, #a3d8b9, #f1afb7, #bcabff); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 12s linear infinite; animation-play-state: paused; }
+  .foot-card:hover .me-art .ring::before { animation-play-state: running; }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  .me-art .ring span { font-family: var(--serif); font-style: italic; font-size: 30px; letter-spacing: -0.04em; color: var(--ink); }
+
+  .foot-bottom { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 72px; padding: 26px 0; border-top: 1px solid var(--rule); font-size: 13px; }
+  .foot-bottom .wordmark { font-size: 22px; color: var(--ink); }
+  .foot-bottom .spacer { flex: 1; }
+  .foot-bottom a:hover { color: var(--ink); }
+
+  /* The wordmark, huge and cropped, with the lavender band that sweeps text while Tidy reads. */
+  .foot-giant {
+    margin: 8px 0 -0.2em; text-align: center; font-weight: 650; font-size: clamp(140px, 30vw, 420px); line-height: 1; letter-spacing: -0.065em;
+    color: transparent; -webkit-background-clip: text; background-clip: text; user-select: none;
+    background-image: linear-gradient(100deg, #0000 40%, #bcabff59 50%, #0000 60%), linear-gradient(180deg, #ffffff1f 10%, #ffffff00 78%);
+    background-size: 300% 100%, 100% 100%; background-position: 100% 0, 0 0;
+  }
+  .site-foot.play .foot-giant { animation: giant 7s ease-in-out 1s infinite; }
+  @keyframes giant { 0% { background-position: 100% 0, 0 0; } 45%, 100% { background-position: 0 0, 0 0; } }
 
   /* Hero demo: the panel rebuilt at its real size (602 px wide, Panel.swift) over a chat window,
      scaled to fit the column by the script (--s). Without the script it shows the finished frame. */
@@ -617,11 +702,22 @@
     .netlog footer { padding: 12px 18px; }
     .needs > div + div { border-left: 0; border-top: 1px solid var(--rule); }
     .closing .desk { padding: 64px 20px; }
+    .site-foot { padding-top: 72px; border-radius: 24px 24px 0 0; }
+    .foot-line { font-size: 32px; margin-bottom: 40px; }
+    .foot-cards { grid-template-columns: 1fr; }
+    .foot-card { gap: 16px; padding-right: 16px; }
+    .foot-card .art { width: 96px; height: 96px; }
+    .ui-art .chip { display: none; }
+    .ui-art .swatches i { width: 18px; height: 18px; margin-left: -5px; }
+    .foot-bottom { margin-top: 48px; gap: 12px 20px; }
+    .foot-bottom .spacer { flex-basis: 100%; height: 0; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
+
+<div class="hero-mesh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
 <header class="bar">
   <div class="top">
@@ -983,15 +1079,40 @@
   </div>
 </div>
 
-<footer>
+<footer class="site-foot">
   <div class="wrap">
-    <span class="wordmark">tidy</span>
-    <span>Made by Tommy Massaro</span>
-    <span class="spacer"></span>
-    <a href="https://github.com/tmass1/tidy">Source</a>
-    <a href="https://github.com/tmass1/tidy/releases">Releases</a>
-    <a href="https://github.com/tmass1/tidy/issues">Report a problem</a>
+    <p class="foot-line"><del>sorry for the late reply</del> <ins>Thanks for your patience.</ins></p>
+    <div class="foot-cards">
+      <a class="foot-card" href="https://tidy-ui.tommymassaro.com/">
+        <div class="art ui-art" aria-hidden="true">
+          <div class="swatches"><i style="--c:#bcabff"></i><i style="--c:#a3d8b9"></i><i style="--c:#f1afb7"></i><i style="--c:#36323f"></i><i style="--c:#f0eef7"></i></div>
+          <span class="chip">Clean up<small>⌘1</small></span>
+        </div>
+        <div class="text">
+          <span class="eyebrow">The interface system</span>
+          <h3>Tidy UI <b aria-hidden="true">↗</b></h3>
+          <p>The parts this panel is built from, glass and all: React components, Figma variables and source.</p>
+        </div>
+      </a>
+      <a class="foot-card" href="https://tommymassaro.com/">
+        <div class="art me-art" aria-hidden="true"><div class="ring"><span>tm</span></div></div>
+        <div class="text">
+          <span class="eyebrow">The designer</span>
+          <h3>Tommy Massaro <b aria-hidden="true">↗</b></h3>
+          <p>Product design leader and former founder. Two decades of products, brands and design systems.</p>
+        </div>
+      </a>
+    </div>
+    <div class="foot-bottom">
+      <a class="wordmark" href="./" aria-label="Tidy home">tidy</a>
+      <span>© 2026 Tommy Massaro</span>
+      <span class="spacer"></span>
+      <a href="https://github.com/tmass1/tidy">Source</a>
+      <a href="https://github.com/tmass1/tidy/releases">Releases</a>
+      <a href="https://github.com/tmass1/tidy/issues">Report a problem</a>
+    </div>
   </div>
+  <div class="foot-giant" aria-hidden="true">tidy</div>
 </footer>
 
 <script>
@@ -1177,7 +1298,11 @@
 // The top bar turns to glass once the page scrolls.
 (() => {
   const bar = document.querySelector('.bar');
-  const update = () => bar.classList.toggle('scrolled', scrollY > 8);
+  const foot = document.querySelector('.site-foot');
+  const update = () => {
+    bar.classList.toggle('scrolled', scrollY > 8);
+    bar.classList.toggle('on-dark', foot.getBoundingClientRect().top < bar.offsetHeight - 20);
+  };
   addEventListener('scroll', update, { passive: true });
   update();
 })();
@@ -1275,6 +1400,16 @@
 (() => {
   const io = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('play', e.isIntersecting)), { threshold: 0.35 });
   document.querySelectorAll('.detail .viz').forEach(v => io.observe(v));
+  const mesh = document.querySelector('.hero-mesh');
+  new IntersectionObserver(([e]) => mesh.classList.toggle('play', e.isIntersecting)).observe(mesh);
+  // The footer's line plays its edit once; the giant wordmark's sweep runs only while it's on screen.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const foot = document.querySelector('.site-foot');
+    new IntersectionObserver(([e]) => {
+      foot.classList.toggle('play', e.isIntersecting);
+      if (e.isIntersecting) foot.classList.add('played');
+    }, { threshold: 0.25 }).observe(foot);
+  }
 })();
 </script>
 </body>
