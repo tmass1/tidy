@@ -235,53 +235,183 @@
   .mode-panel .foot { display: flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 12px; color: var(--muted); }
   .mode-panel .foot::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
 
-  /* The details */
+  /* The details: each card's picture is a small piece of the app. They loop only while on screen
+     (the script adds .play); with reduced motion they stay on their base frame, which is complete. */
   .details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .detail { border-radius: 20px; background: var(--white); box-shadow: var(--card-shadow); overflow: hidden; }
-  .detail .viz { height: 176px; background: var(--page); display: grid; place-items: center; padding: 20px; border-bottom: 1px solid var(--rule); }
+  .detail .viz { position: relative; height: 210px; background: var(--page); display: grid; place-items: center; padding: 20px 22px; border-bottom: 1px solid var(--rule); overflow: hidden; }
   .detail .copy { padding: 22px 24px 26px; }
   .detail p { margin: 0; font-size: 15px; color: var(--body); }
-  .mini-trail { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
-  .mini-trail span { padding: 5px 9px; border-radius: 7px; }
-  .mini-trail .on { background: var(--white); color: var(--ink); box-shadow: var(--card-shadow); }
-  .mini-trail i { font-style: normal; opacity: .6; }
-  .voice { margin: 0; padding: 14px 18px; border-radius: 12px; background: var(--white); box-shadow: var(--card-shadow); list-style: none; font-size: 13px; line-height: 1.5; color: var(--body); width: 100%; max-width: 260px; }
-  .voice li { display: flex; gap: 8px; }
-  .voice li::before { content: "–"; color: var(--accent); }
-  .meter { width: 100%; max-width: 250px; font-size: 13px; color: var(--muted); }
-  .meter .bar { height: 6px; border-radius: 3px; background: var(--layer); margin: 0 0 10px; overflow: hidden; }
-  .meter .bar i { display: block; width: 88%; height: 100%; border-radius: 3px; background: var(--accent); }
-  .meter .row { display: flex; justify-content: space-between; }
-  .meter b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .history { width: 100%; max-width: 270px; display: grid; gap: 6px; }
-  .history div { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 9px 12px; border-radius: 10px; background: var(--white); box-shadow: var(--card-shadow); font-size: 13px; }
-  .history b { font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .history span { color: var(--muted); font-size: 12px; }
-  .history small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .menu { width: 100%; max-width: 240px; padding: 6px; border-radius: 11px; background: var(--white); box-shadow: 0 1px 2px #2720361a, 0 14px 30px -14px #27203659; font-size: 13px; }
-  .menu div { padding: 5px 10px; border-radius: 6px; color: var(--ink); }
-  .menu .hl { background: var(--accent); color: #fff; }
-  .menu hr { border: 0; border-top: 1px solid var(--rule); margin: 5px 4px; }
-  .menu .dim { color: var(--muted); }
-  .hold { display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
-  .hold .btn { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; }
-  .hold .btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-  .hold q { font-size: 15px; color: var(--body); quotes: "“" "”"; }
+  .viz * { animation-play-state: paused !important; }
+  .viz.play * { animation-play-state: running !important; }
+  .mini { width: 100%; max-width: 292px; border-radius: 14px; background: var(--white); box-shadow: var(--card-shadow); font-size: 12.5px; line-height: 18px; color: var(--ink); letter-spacing: -0.05px; }
+  .detail .mini, .detail .mini p { font-size: 12.5px; color: var(--ink); }
+  .viz svg.i { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
 
-  /* Privacy */
-  .privacy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; align-items: start; }
-  .flow { margin-top: 40px; border-radius: 20px; background: var(--white); box-shadow: var(--card-shadow); padding: 28px; }
-  .flow svg { display: block; width: 100%; height: auto; }
-  .rows { list-style: none; margin: 0; padding: 0; }
-  .rows li { display: grid; grid-template-columns: 9em 1fr; gap: 16px; padding: 18px 0 19px; border-bottom: 1px solid var(--rule); font-size: 16px; }
-  .rows li:first-child { border-top: 1px solid var(--rule); }
-  .rows b { font-weight: 600; }
-  .rows span { color: var(--body); }
-  .needs-wrap { grid-column: 1 / -1; display: grid; grid-template-columns: 9.5em 1fr; gap: 24px; align-items: start; margin-top: 8px; }
-  .needs-title { font-size: 14px; font-weight: 500; color: var(--muted); margin: 18px 0 0; }
-  .needs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .needs div { border-radius: 16px; background: var(--white); box-shadow: var(--card-shadow); padding: 18px 20px 20px; font-size: 15px; color: var(--body); line-height: 1.5; }
-  .needs b { display: block; color: var(--ink); font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  /* 1. A typed change becomes a step on the trail. */
+  .v-tray { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px; }
+  .v-trail { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .v-trail span { padding: 3px 7px; border-radius: 6px; line-height: 16px; }
+  .v-trail i { font-style: normal; opacity: .6; }
+  .v-trail .on { color: var(--ink); background: var(--layer); }
+  .v-trail .prev { animation: v1-prev 8s infinite; }
+  .v-trail .new { animation: v1-new 8s infinite; }
+  .v-field { position: relative; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 5px 0 10px; border-radius: 10px; background: var(--well); border: 1px solid var(--well-border); animation: v1-focus 8s infinite; }
+  .v-field > .i { color: var(--accent); }
+  .v-field .ph { min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: v1-ph 8s infinite; }
+  .v-field .typed { position: absolute; left: 31px; white-space: nowrap; opacity: 0; animation: v1-type 8s infinite; }
+  .v-field .go { margin-left: auto; width: 27px; height: 27px; flex: none; display: grid; place-items: center; border-radius: 7px; color: var(--muted); animation: v1-go 8s infinite; }
+  @keyframes v1-prev { 0%, 57% { color: var(--ink); background: var(--layer); } 61%, 100% { color: var(--muted); background: #0000; } }
+  @keyframes v1-new { 0%, 56% { opacity: 0; transform: translateX(-8px); } 62%, 100% { opacity: 1; transform: none; } }
+  @keyframes v1-focus { 0%, 8% { border-color: var(--well-border); } 10%, 54% { border-color: var(--accent); } 58%, 100% { border-color: var(--well-border); } }
+  @keyframes v1-ph { 0%, 10% { opacity: 1; } 11%, 55% { opacity: 0; } 58%, 100% { opacity: 1; } }
+  @keyframes v1-type {
+    0%, 12% { opacity: 1; clip-path: inset(0 100% 0 0); animation-timing-function: steps(16, end); }
+    40%, 54% { opacity: 1; clip-path: inset(0 0 0 0); }
+    55%, 100% { opacity: 0; clip-path: inset(0 0 0 0); }
+  }
+  @keyframes v1-go { 0%, 40% { color: var(--muted); } 42%, 49% { color: var(--ink); background: #0000; transform: none; } 50%, 54% { color: var(--ink); background: var(--layer); transform: scale(.9); } 57%, 100% { color: var(--muted); background: #0000; transform: none; } }
+
+  /* 2. An edit you make becomes a line in your writing style. */
+  .v-voice { display: grid; gap: 10px; width: 100%; max-width: 292px; }
+  .v-edit { display: flex; align-items: baseline; gap: 6px; padding: 9px 12px; white-space: nowrap; }
+  .v-edit small { font-size: 11px; color: var(--muted); margin-right: 2px; }
+  .v-edit del, .v-edit ins { border-radius: 4px; padding: 0 2px; }
+  .v-edit del { color: var(--red); background: var(--red-wash); text-decoration: line-through var(--red); animation: v2-del 9s infinite; }
+  .v-edit ins { display: inline-block; vertical-align: bottom; overflow: hidden; max-width: 4.5em; color: var(--green); background: var(--green-wash); text-decoration: underline var(--green-line); text-underline-offset: 3px; animation: v2-ins 9s infinite; }
+  .v-edit .rest { margin-left: -6px; }
+  .v-profile { padding: 11px 14px 12px; }
+  .v-profile h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 11px; font-weight: 500; color: var(--muted); }
+  .v-profile h4 .i { color: var(--accent); }
+  .v-profile ul { list-style: none; margin: 0; padding: 0; }
+  .v-profile li { display: flex; gap: 7px; padding: 1px 6px; margin: 0 -6px; border-radius: 6px; white-space: nowrap; overflow: hidden; max-height: 20px; }
+  .v-profile li::before { content: "–"; color: var(--accent); }
+  .v-profile li.learned { animation: v2-learn 9s infinite; }
+  @keyframes v2-del { 0%, 14% { color: var(--ink); background: #0000; text-decoration-color: #0000; } 20%, 100% { color: var(--red); background: var(--red-wash); text-decoration-color: var(--red); } }
+  @keyframes v2-ins { 0%, 18% { max-width: 0; padding: 0; } 26%, 100% { max-width: 4.5em; padding: 0 2px; } }
+  @keyframes v2-learn { 0%, 34% { max-height: 0; opacity: 0; background: var(--accent-soft); } 42% { max-height: 20px; opacity: 1; background: var(--accent-soft); } 80% { background: var(--accent-soft); } 92%, 100% { max-height: 20px; opacity: 1; background: #0000; } }
+
+  /* 3. Over the limit, then rewritten under it. The count is a CSS counter driven by --n. */
+  @property --n { syntax: "<integer>"; inherits: true; initial-value: 144; }
+  .v-limit { --n: 144; display: grid; gap: 12px; width: 100%; max-width: 292px; animation: v3-n 8s infinite; }
+  .v-msg { display: grid; padding: 10px 12px; min-height: 92px; align-items: start; }
+  .v-msg p { grid-area: 1 / 1; margin: 0; }
+  .v-msg .long { opacity: 0; animation: v3-long 8s infinite; }
+  .v-msg .long mark { color: var(--red); background: var(--red-wash); border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .v-msg .short { animation: v3-short 8s infinite; }
+  .v-meter { font-size: 12px; color: var(--muted); }
+  .v-meter .track { position: relative; height: 6px; border-radius: 3px; background: var(--layer); margin-bottom: 8px; }
+  .v-meter .fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--n) * 100% / 200); border-radius: 3px; background: var(--accent); animation: v3-fill 8s infinite; }
+  .v-meter .cap { position: absolute; left: 80%; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; background: var(--ink); opacity: .35; }
+  .v-meter .row { display: flex; justify-content: space-between; }
+  .v-meter .count { animation: v3-count 8s infinite; }
+  .v-meter .n { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; animation: v3-count 8s infinite; }
+  .v-meter .n::after { counter-reset: n var(--n); content: counter(n); }
+  @keyframes v3-n { 0%, 42% { --n: 188; } 56%, 100% { --n: 144; } }
+  @keyframes v3-long { 0%, 40% { opacity: 1; } 46%, 100% { opacity: 0; } }
+  @keyframes v3-short { 0%, 44% { opacity: 0; } 52%, 100% { opacity: 1; } }
+  @keyframes v3-fill { 0%, 47% { background: var(--red); } 52%, 100% { background: var(--accent); } }
+  @keyframes v3-count { 0%, 47% { color: var(--red); } 52%, 100% { color: inherit; } }
+
+  /* 4. Search the history: rows that don't match fold away. */
+  .v-hist { overflow: hidden; }
+  .v-search { position: relative; display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--rule); color: var(--muted); }
+  .v-search .ph { animation: v4-ph 8s infinite; }
+  .v-search .typed { position: absolute; left: 32px; color: var(--ink); opacity: 0; animation: v4-type 8s infinite; }
+  .v-hist .r { display: flex; align-items: center; gap: 8px; height: 37px; max-height: 37px; padding: 0 12px; overflow: hidden; }
+  .v-hist .r + .r { border-top: 1px solid var(--rule); }
+  .v-hist .r b { font-weight: 550; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-hist .r span { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .v-hist .r .app { width: 18px; height: 18px; flex: none; display: grid; place-items: center; border-radius: 5px; background: var(--layer); color: var(--body); }
+  .v-hist .r .app .i { width: 11px; height: 11px; }
+  .v-hist .miss { animation: v4-fold 8s infinite; }
+  .v-hist mark { color: inherit; background: #0000; border-radius: 3px; animation: v4-mark 8s infinite; }
+  @keyframes v4-ph { 0%, 10% { opacity: 1; } 11%, 82% { opacity: 0; } 84%, 100% { opacity: 1; } }
+  @keyframes v4-type { 0%, 11% { opacity: 1; clip-path: inset(0 100% 0 0); animation-timing-function: steps(6, end); } 26%, 82% { opacity: 1; clip-path: inset(0 0 0 0); } 83%, 100% { opacity: 0; } }
+  @keyframes v4-fold { 0%, 28% { max-height: 37px; opacity: 1; } 32% { opacity: 0; } 36%, 82% { max-height: 0; opacity: 0; border-top-color: #0000; } 88% { max-height: 37px; opacity: 0; } 92%, 100% { max-height: 37px; opacity: 1; } }
+  @keyframes v4-mark { 0%, 28% { background: #0000; } 34%, 82% { background: var(--accent-soft); color: var(--accent-ink); } 86%, 100% { background: #0000; } }
+
+  /* 5. Hold Original to see the draft. */
+  .v-hold { position: relative; padding: 10px 14px 16px; }
+  .v-hold .top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 11.5px; color: var(--muted); }
+  .v-hold .top b { color: var(--ink); font-weight: 550; box-shadow: 0 1.5px 0 var(--ink); padding-bottom: 2px; }
+  .v-hold .orig { margin-left: auto; display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 7px; color: var(--accent-ink); background: var(--accent-soft); animation: v5-btn 6s infinite; }
+  .v-hold .txt { display: grid; font-size: 16px; line-height: 23px; letter-spacing: -0.35px; }
+  .detail .v-hold .txt p { grid-area: 1 / 1; margin: 0; font-size: 16px; }
+  .v-hold .clean { animation: v5-clean 6s infinite; }
+  .detail .v-hold .draft { color: var(--muted); opacity: 0; animation: v5-draft 6s infinite; }
+  .v-hold .cursor { position: absolute; right: 18px; top: 20px; width: 16px; height: 20px; opacity: 0; animation: v5-cursor 6s infinite; filter: drop-shadow(0 1px 1.5px #27203640); }
+  @keyframes v5-cursor { 0%, 8% { opacity: 0; transform: translate(26px, 46px); } 14% { opacity: 1; } 28%, 76% { opacity: 1; transform: translate(0, 0); } 30%, 70% { transform: translate(0, 0) scale(.88); } 90%, 100% { opacity: 0; transform: translate(30px, 40px); } }
+  @keyframes v5-btn { 0%, 29% { background: var(--accent-soft); transform: none; } 31%, 70% { background: color-mix(in srgb, var(--accent) 22%, var(--white)); transform: scale(.96); } 72%, 100% { background: var(--accent-soft); transform: none; } }
+  @keyframes v5-clean { 0%, 31% { opacity: 1; } 34%, 70% { opacity: 0; } 73%, 100% { opacity: 1; } }
+  @keyframes v5-draft { 0%, 31% { opacity: 0; } 34%, 70% { opacity: 1; } 73%, 100% { opacity: 0; } }
+
+  /* 6. The menu bar item, with an update waiting. */
+  .detail .viz.v-desk { place-items: start stretch; padding: 0; }
+  .v-menubar { display: flex; align-items: center; justify-content: flex-end; gap: 14px; height: 26px; padding: 0 14px; background: #ffffffb3; border-bottom: 1px solid var(--rule); font-size: 12px; font-weight: 500; color: var(--ink); }
+  .v-menubar .wand { display: grid; place-items: center; width: 26px; height: 20px; border-radius: 5px; animation: v6-wand 8s infinite; }
+  .v-menubar .i { width: 14px; height: 14px; }
+  .v-menu { position: absolute; top: 30px; right: 74px; width: 216px; padding: 5px; border-radius: 10px; background: #fcfcfff2; box-shadow: 0 0 0 1px #aca2bd40, 0 14px 30px -12px #27203666; font-size: 12.5px; transform-origin: 85% 0; animation: v6-menu 8s infinite; }
+  .v-menu div { display: flex; justify-content: space-between; padding: 2px 9px; line-height: 18px; border-radius: 5px; }
+  .v-menu div span { color: var(--muted); letter-spacing: 1px; }
+  .v-menu hr { border: 0; border-top: 1px solid var(--rule); margin: 4px 9px; }
+  .v-menu .up { color: #fff; background: var(--accent); animation: v6-up 8s infinite; }
+  .v-menu .m1 { animation: v6-m1 8s infinite; }
+  .v-menu .m1 span { animation: v6-m1k 8s infinite; }
+  .v-menu .m2 { animation: v6-m2 8s infinite; }
+  @keyframes v6-menu { 0%, 6% { opacity: 0; transform: translateY(-4px) scale(.98); } 10%, 82% { opacity: 1; transform: none; } 86%, 100% { opacity: 0; transform: none; } }
+  @keyframes v6-wand { 0%, 6% { background: #0000; } 8%, 84% { background: #29283224; } 86%, 100% { background: #0000; } }
+  @keyframes v6-m1 { 0%, 20% { background: #0000; color: inherit; } 21%, 32% { background: var(--accent); color: #fff; } 33%, 100% { background: #0000; color: inherit; } }
+  @keyframes v6-m1k { 0%, 20% { color: var(--muted); } 21%, 32% { color: #ffffffb3; } 33%, 100% { color: var(--muted); } }
+  @keyframes v6-m2 { 0%, 32% { background: #0000; color: inherit; } 33%, 42% { background: var(--accent); color: #fff; } 43%, 100% { background: #0000; color: inherit; } }
+  @keyframes v6-up { 0%, 42% { background: #0000; color: var(--ink); } 43%, 66% { background: var(--accent); color: #fff; } 67%, 69% { background: #0000; color: var(--ink); } 70%, 82% { background: var(--accent); color: #fff; } 86%, 100% { background: #0000; color: var(--ink); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .viz * { animation: none !important; }
+    .v-menu .up { background: var(--accent); color: #fff; }
+  }
+
+  /* Privacy: what stays on the Mac (left), and every connection the app makes, as a Mac window (right). */
+  .privacy { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 64px 64px; align-items: center; }
+  .local { list-style: none; margin: 40px 0 0; padding: 0; display: grid; gap: 18px; }
+  .local li { display: grid; grid-template-columns: 40px 1fr; gap: 0 14px; align-items: center; font-size: 15px; color: var(--body); line-height: 1.45; }
+  .local b { display: block; color: var(--ink); font-weight: 600; }
+  .glyph { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: var(--white); box-shadow: var(--card-shadow); color: var(--accent); }
+  .glyph svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+  .netlog { margin: 0; border-radius: 16px; background: var(--white); overflow: hidden; box-shadow: 0 0 0 1px #aca2bd2e, 0 2px 4px #2720360d, 0 30px 60px -28px #2720364d; }
+  .netlog .titlebar { position: relative; display: flex; align-items: center; height: 44px; padding: 0 16px; border-bottom: 1px solid var(--rule); background: var(--paper); }
+  .netlog .lights { display: flex; gap: 8px; }
+  .netlog .lights i { width: 12px; height: 12px; border-radius: 50%; background: #dedbe7; }
+  .netlog .titlebar b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; font-weight: 600; color: var(--ink); pointer-events: none; }
+  .netlog .cols, .netlog li { display: grid; grid-template-columns: 22px minmax(0, 1fr) 172px; gap: 0 24px; padding: 0 24px 0 22px; }
+  .netlog .cols { padding-top: 12px; padding-bottom: 10px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--rule); }
+  .netlog .cols span:first-child { grid-column: 2; }
+  .netlog ul { list-style: none; margin: 0; padding: 0; }
+  .netlog li { padding-top: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--rule); align-items: start; }
+  .netlog .dot { width: 8px; height: 8px; margin: 7px 0 0 4px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-wash); }
+  .netlog .host { display: flex; align-items: center; gap: 7px; font: 500 14px/1.6 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.2px; color: var(--ink); }
+  .netlog .host svg { width: 12px; height: 12px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+  .netlog .what { display: block; font-size: 15px; color: var(--body); line-height: 1.45; margin-top: 2px; }
+  .netlog .when { font-size: 13px; color: var(--muted); line-height: 1.45; padding-top: 2px; }
+  .netlog .when kbd { font-size: 11px; padding: 0 5px; min-width: 0; border-radius: 5px; }
+  /* The row that isn't there: struck through like a removal in the diff. */
+  .netlog li.none { background: repeating-linear-gradient(-45deg, transparent 0 7px, #aca2bd12 7px 8px); border-bottom: 0; }
+  .netlog li.none .dot { background: none; box-shadow: inset 0 0 0 1.5px #aca2bd80; }
+  .netlog li.none del { font: 500 14px/1.6 ui-monospace, "SF Mono", Menlo, monospace; color: var(--red); background: var(--red-wash); text-decoration: line-through var(--red); border-radius: 4px; padding: 1px 4px; margin-left: -4px; }
+  .netlog li.none .what { color: var(--muted); }
+  .netlog footer { display: flex; align-items: center; gap: 8px; padding: 13px 22px; border-top: 1px solid var(--rule); background: var(--paper); font-size: 12px; color: var(--muted); }
+  .netlog footer::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
+
+  /* What you need: one strip, three cells. */
+  .needs-wrap { grid-column: 1 / -1; }
+  .needs-title { font-size: 14px; font-weight: 500; color: var(--muted); margin: 0 0 14px; }
+  .needs { display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 20px; background: var(--white); box-shadow: var(--card-shadow); }
+  .needs > div { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 24px 26px 26px; font-size: 15px; color: var(--body); line-height: 1.5; }
+  .needs > div + div { border-left: 1px solid var(--rule); }
+  .needs .glyph { box-shadow: none; background: var(--accent-soft); }
+  .needs b { display: block; color: var(--ink); font-weight: 600; margin: 1px 0 3px; }
+  .needs a { color: var(--accent-ink); text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 3px; }
 
   /* Closing */
   .closing { padding-top: 0; padding-bottom: 120px; }
@@ -455,8 +585,12 @@
     .mode-card { padding: 16px; border-radius: 22px; }
     .mode-panel { padding: 20px; }
     .mode-panel .out { font-size: 19px; }
-    .rows li { grid-template-columns: 1fr; gap: 2px; }
-    .needs-wrap { grid-template-columns: 1fr; gap: 12px; }
+    .netlog .cols { display: none; }
+    .netlog .titlebar b { position: static; display: block; margin-left: 14px; }
+    .netlog li { grid-template-columns: 18px minmax(0, 1fr); padding: 16px 18px; }
+    .netlog .when { grid-column: 2; padding-top: 6px; }
+    .netlog footer { padding: 12px 18px; }
+    .needs > div + div { border-left: 0; border-top: 1px solid var(--rule); }
     .closing .desk { padding: 64px 20px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
@@ -685,7 +819,10 @@
     <div class="details">
       <article class="detail">
         <div class="viz" aria-hidden="true">
-          <div class="mini-trail"><span>Clean up</span><i>›</i><span>friendlier</span><i>›</i><span class="on">mention the demo</span></div>
+          <div class="mini v-tray">
+            <div class="v-trail"><span>Clean up</span><i>›</i><span class="prev">friendlier</span><i class="new">›</i><span class="on new">mention the demo</span></div>
+            <div class="v-field"><svg class="i" viewBox="0 14 14"><path d="M2.5 2v3.5a3 3 0 0 0 3 3h6M9 6l2.5 2.5L9 11"/></svg><span class="ph">Anything else? “shorter”, “add the Figma link”…</span><span class="typed">mention the demo</span><span class="go"><svg class="i" viewBox="0 14 14"><path d="M7 12V2.5M3 6.3 7 2.3l4 4"/></svg></span></div>
+          </div>
         </div>
         <div class="copy">
           <h3>Change it in your own words</h3>
@@ -694,7 +831,13 @@
       </article>
       <article class="detail">
         <div class="viz" aria-hidden="true">
-          <ul class="voice"><li>Signs off with just a first name</li><li>Says “thanks” more than “thank you”</li><li>Short paragraphs, no exclamation marks</li></ul>
+          <div class="v-voice">
+            <p class="mini v-edit"><small>You sent</small><del>Thank you</del><ins>Thanks</ins><span class="rest">, see you at 3.</span></p>
+            <div class="mini v-profile">
+              <h4><svg class="i" viewBox="0 14 14"><path d="M7 1.5v3M7 9.5v3M1.5 7h3M9.5 7h3M3.2 3.2l1.6 1.6M9.2 9.2l1.6 1.6M10.8 3.2 9.2 4.8M4.8 9.2l-1.6 1.6"/></svg>Your writing style</h4>
+              <ul><li>Signs off with just a first name</li><li class="learned">Says “thanks,” not “thank you”</li><li>Short paragraphs, no exclamation marks</li></ul>
+            </div>
+          </div>
         </div>
         <div class="copy">
           <h3>Still sounds like you</h3>
@@ -703,7 +846,13 @@
       </article>
       <article class="detail">
         <div class="viz" aria-hidden="true">
-          <div class="meter"><div class="bar"><i></i></div><div class="row"><span>Messages</span><span><b>141</b> / 160 characters</span></div></div>
+          <div class="v-limit">
+            <div class="mini v-msg">
+              <p class="long">hey so the vendor pushed delivery again and we wont have the units until the 30th, which means the launch slips about a week. not ideal but we can make it work <mark>if marketing moves the email</mark></p>
+              <p class="short">The vendor pushed delivery again, so the units arrive on the 30th and the launch slips a week. We can make it work if marketing moves the email.</p>
+            </div>
+            <div class="v-meter"><div class="track"><i class="fill"></i><i class="cap"></i></div><div class="row"><span>Messages</span><span class="count"><b class="n"></b> / 160 characters</span></div></div>
+          </div>
         </div>
         <div class="copy">
           <h3>Fits the box</h3>
@@ -712,9 +861,11 @@
       </article>
       <article class="detail">
         <div class="viz" aria-hidden="true">
-          <div class="history">
-            <div><b>Re: Q3 launch timeline</b><span>2:14 PM</span><small>Mail · Hi Priya, circling back on the timeline…</small></div>
-            <div><b>#api-platform</b><span>11:02 AM</span><small>Slack · Can someone look at the API timing…</small></div>
+          <div class="mini v-hist">
+            <div class="v-search"><svg class="i" viewBox="0 14 14"><circle cx="6" cy="6" r="4"/><path d="m9 9 3.2 3.2"/></svg><span class="ph">Find something you wrote</span><span class="typed">launch</span></div>
+            <div class="r"><span class="app"><svg class="i" viewBox="0 14 14"><rect x="1.5" y="3" width="11" height="8" rx="1.5"/><path d="m2 4 5 4 5-4"/></svg></span><b>Re: Q3 <mark>launch</mark> timeline</b><span>2:14 PM</span></div>
+            <div class="r miss"><span class="app"><svg class="i" viewBox="0 14 14"><path d="M5.5 2 4.2 12M10 2 8.7 12M2.2 5h10M1.8 9h10"/></svg></span><b>#api-platform</b><span>11:02 AM</span></div>
+            <div class="r miss"><span class="app"><svg class="i" viewBox="0 14 14"><path d="M7 2C3.8 2 1.6 3.9 1.6 6.2c0 1.3.7 2.4 1.7 3.1l-.4 2.5 2.7-1.6c.4.1.9.2 1.4.2 3.2 0 5.4-1.9 5.4-4.2S10.2 2 7 2Z"/></svg></span><b>Mom</b><span>Yesterday</span></div>
           </div>
         </div>
         <div class="copy">
@@ -724,9 +875,10 @@
       </article>
       <article class="detail">
         <div class="viz" aria-hidden="true">
-          <div class="hold">
-            <span class="btn"><svg viewBox="0 0 14 14"><path d="M1.5 4V2.5a1 1 0 0 1 1-1H4M10 1.5h1.5a1 1 0 0 1 1 1V4M12.5 10v1.5a1 1 0 0 1-1 1H10M4 12.5H2.5a1 1 0 0 1-1-1V10M4.5 5h5M4.5 7h5M4.5 9h3"/></svg>Original</span>
-            <q>can u send the deck before 3</q>
+          <div class="mini v-hold">
+            <div class="top"><b>Final</b><span>Changes</span><span class="orig"><svg class="i" viewBox="0 14 14"><path d="M1.5 4V2.5a1 1 0 0 1 1-1H4M10 1.5h1.5a1 1 0 0 1 1 1V4M12.5 10v1.5a1 1 0 0 1-1 1H10M4 12.5H2.5a1 1 0 0 1-1-1V10M4.5 5h5M4.5 7h5M4.5 9h3"/></svg>Original</span></div>
+            <div class="txt"><p class="clean">Can you send the deck before 3?</p><p class="draft">can u send the deck before 3</p></div>
+            <svg class="cursor" viewBox="0 0 16 20"><path d="M1.5 1.5v15l3.8-3.6 2.6 5.6 2.4-1.1-2.5-5.4h5.2Z" fill="#292832" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/></svg>
           </div>
         </div>
         <div class="copy">
@@ -735,8 +887,18 @@
         </div>
       </article>
       <article class="detail">
-        <div class="viz" aria-hidden="true">
-          <div class="menu"><div class="dim">History…</div><div class="dim">Settings…</div><hr><div class="hl">Update to Tidy 1.3…</div><hr><div class="dim">Quit Tidy</div></div>
+        <div class="viz v-desk" aria-hidden="true">
+          <div class="v-menubar"><span class="wand"><svg class="i" viewBox="0 14 14"><path d="m2 12 7.5-7.5M8.2 3.2l2.6 2.6M11 1.5v2M10 2.5h2M12.5 5.5v1.6M11.7 6.3h1.6"/></svg></span><svg class="i" viewBox="0 14 14"><path d="M1.8 5.2a7.4 7.4 0 0 1 10.4 0M3.7 7.3a4.7 4.7 0 0 1 6.6 0M5.6 9.4a2 2 0 0 1 2.8 0"/><circle cx="7" cy="11.3" r=".6" fill="currentColor"/></svg><span>Tue 9:41</span></div>
+          <div class="v-menu">
+            <div class="m1">Clean Up Selection<span>⌥⌘C</span></div>
+            <div class="m2">Clean Up Clipboard</div>
+            <hr>
+            <div class="up">Update to Tidy 1.3…</div>
+            <div>History…</div>
+            <div>Settings…<span>⌘,</span></div>
+            <hr>
+            <div>Quit Tidy<span>⌘Q</span></div>
+          </div>
         </div>
         <div class="copy">
           <h3>Keeps itself current</h3>
@@ -753,38 +915,31 @@
       <p class="kicker">Privacy</p>
       <h2 id="privacy-title">Your key, <em>your Mac.</em></h2>
       <p class="lede">Tidy uses your own Anthropic API key, so you pay Anthropic directly for what you use. There’s no account to make and no Tidy server in the middle.</p>
-      <div class="flow">
-        <svg viewBox="0 0 440 150" role="img" aria-label="Your text goes from your Mac straight to Anthropic’s API. There is no Tidy server.">
-          <g font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13">
-            <rect x="1" y="20" width="132" height="60" rx="14" fill="#fcfcff" stroke="#aca2bd59"/>
-            <text x="67" y="46" text-anchor="middle" fill="#292832" font-weight="600">Your Mac</text>
-            <text x="67" y="64" text-anchor="middle" fill="#74717f" font-size="12">Tidy + Keychain</text>
-            <rect x="307" y="20" width="132" height="60" rx="14" fill="#eee9ff"/>
-            <text x="373" y="46" text-anchor="middle" fill="#4b3ba6" font-weight="600">Anthropic API</text>
-            <text x="373" y="64" text-anchor="middle" fill="#6350c5" font-size="12">with your key</text>
-            <path d="M140 50h156" stroke="#6350c5" stroke-width="1.5"/>
-            <path d="m290 45 7 5-7 5" fill="none" stroke="#6350c5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="220" y="40" text-anchor="middle" fill="#74717f" font-size="12">your draft, over HTTPS</text>
-            <rect x="160" y="104" width="120" height="40" rx="12" fill="none" stroke="#aca2bd80" stroke-dasharray="4 4"/>
-            <text x="220" y="129" text-anchor="middle" fill="#a54b56" font-size="12">No Tidy server</text>
-          </g>
-        </svg>
-      </div>
-    </div>
-    <div>
-      <ul class="rows">
-        <li><b>Your text</b><span>Goes straight from your Mac to Anthropic’s API, and nowhere else.</span></li>
-        <li><b>Your key</b><span>Stored in your macOS Keychain.</span></li>
-        <li><b>Your history</b><span>Saved on your Mac only. Clear it any time.</span></li>
-        <li><b>Tracking</b><span>None. The only other request is a daily check for updates on GitHub.</span></li>
+      <ul class="local">
+        <li><span class="glyph" aria-hidden="true"><svg viewBox="0 0 18 18"><circle cx="6" cy="9" r="3.5"/><path d="M9.5 9h7M14 9v2.5M16.5 9v2"/></svg></span><span><b>Your API key</b>Stored in your macOS Keychain.</span></li>
+        <li><span class="glyph" aria-hidden="true"><svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l2.5 2"/></svg></span><span><b>Your history</b>Saved on your Mac only. Clear it any time.</span></li>
+        <li><span class="glyph" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M3 4.5h12M3 9h12M3 13.5h7"/></svg></span><span><b>Your modes and writing style</b>Kept on your Mac, not in an account.</span></li>
       </ul>
     </div>
+
+    <figure class="netlog" aria-labelledby="netlog-title">
+      <div class="titlebar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><b id="netlog-title">Every connection Tidy makes</b></div>
+      <div class="cols" aria-hidden="true"><span>Where, and what’s sent</span><span>When</span></div>
+      <ul>
+        <li><span class="dot" aria-hidden="true"></span><span><span class="host"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.6" rx="1.4"/><path d="M4 5.2V3.8a2 2 0 0 1 4 0v1.4"/></svg>api.anthropic.com</span><span class="what">Your draft and the mode, with your key</span></span><span class="when">When you press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd> or ask for a change</span></li>
+        <li><span class="dot" aria-hidden="true"></span><span><span class="host"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.6" rx="1.4"/><path d="M4 5.2V3.8a2 2 0 0 1 4 0v1.4"/></svg>api.github.com</span><span class="what">A check for a new version</span></span><span class="when">Once a day</span></li>
+        <li><span class="dot" aria-hidden="true"></span><span><span class="host"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.2" width="8" height="5.6" rx="1.4"/><path d="M4 5.2V3.8a2 2 0 0 1 4 0v1.4"/></svg>github.com</span><span class="what">The new version, signed and notarized</span></span><span class="when">Only when you choose to update</span></li>
+        <li class="none"><span class="dot" aria-hidden="true"></span><span><del>a Tidy server</del><span class="what">Analytics, tracking, an account</span></span><span class="when">Never</span></li>
+      </ul>
+      <footer>That’s the whole list. All of it over HTTPS.</footer>
+    </figure>
+
     <div class="needs-wrap">
       <p class="needs-title">What you need</p>
       <div class="needs">
-        <div><b>A Mac</b>Apple Silicon, macOS 14 Sonoma or later.</div>
-        <div><b>An API key</b>From <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a>. Tidy asks for it on first launch.</div>
-        <div><b>Accessibility</b>macOS asks once, so Tidy can copy your selection and paste the result.</div>
+        <div><span class="glyph" aria-hidden="true"><svg viewBox="0 0 18 18"><rect x="2" y="3" width="14" height="9.5" rx="1.6"/><path d="M6.5 15.5h5M9 12.5v3"/></svg></span><span><b>A Mac</b>Apple Silicon, macOS 14 Sonoma or later.</span></div>
+        <div><span class="glyph" aria-hidden="true"><svg viewBox="0 0 18 18"><circle cx="6" cy="9" r="3.5"/><path d="M9.5 9h7M14 9v2.5M16.5 9v2"/></svg></span><span><b>An API key</b>From <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a>. Tidy asks for it on first launch.</span></div>
+        <div><span class="glyph" aria-hidden="true"><svg viewBox="0 0 18 18"><circle cx="9" cy="3.6" r="1.6"/><path d="M3 6.5 9 8l6-1.5M9 8v3.5M6.5 16 9 11.5l2.5 4.5"/></svg></span><span><b>Accessibility</b>macOS asks once, so Tidy can copy your selection and paste the result.</span></div>
       </div>
     </div>
   </div>
@@ -1026,6 +1181,13 @@
       out.classList.remove('fade');
     }, 160);
   }));
+})();
+</script>
+<script>
+/* Detail cards: run their loops only while they're on screen. */
+(() => {
+  const io = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('play', e.isIntersecting)), { threshold: 0.35 });
+  document.querySelectorAll('.detail .viz').forEach(v => io.observe(v));
 })();
 </script>
 </body>

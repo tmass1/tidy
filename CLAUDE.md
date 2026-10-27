@@ -168,6 +168,9 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   are the `Theme` tokens (light) copied into the page's `:root`; its metrics come from `Panel.swift`.
   The captions under it (`.steps-live`) light up from the demo's `phase` events, so a new or reordered
   step in the script needs its caption updated too.
+  The six "details" cards each show a small looping copy of part of the app (the trail and field, the voice
+  profile, the character-limit meter, History search, Original, the menu bar menu in its real item order); they
+  are pure CSS keyframes that run only while on screen.
   Other sections also echo the app: the mode names and ⌘ numbers, the diff colors, "Ready to replace ·
   N words", the trail, the Original button, the menu bar's "Update to Tidy X…".
 - **Any change to the panel's UI or copy updates the site in the same change.** That covers layout,
