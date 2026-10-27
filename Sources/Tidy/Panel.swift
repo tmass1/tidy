@@ -259,6 +259,8 @@ final class PanelModel: ObservableObject {
     @Published var original = ""
     @Published var result = ""
     @Published var isStreaming = false
+    /// The text Claude is working from: shown ghosted until the first words arrive.
+    @Published private(set) var reading = ""
     @Published var error: String?
     @Published var modeID: UUID?
     @Published var tweak = ""
@@ -281,6 +283,8 @@ final class PanelModel: ObservableObject {
     @Published var openToken = UUID()
 
     private(set) var suggestion = ""
+    /// When each streamed chunk landed (its end, in UTF-16 units), so new words can fade in.
+    private(set) var arrivals: [Styled.Arrival] = []
     private(set) var sourceApp: NSRunningApplication?
     private(set) var hadSelection = false
     private var task: Task<Void, Never>?
@@ -474,6 +478,8 @@ final class PanelModel: ObservableObject {
         error = nil
         notice = nil
         result = ""
+        reading = base
+        arrivals = []
         view = .final
         isStreaming = true
 
@@ -486,7 +492,9 @@ final class PanelModel: ObservableObject {
             do {
                 for try await chunk in Claude.stream(apiKey: key, model: model, system: system, user: user) {
                     text += chunk
-                    self?.result = Prompts.clean(text, streaming: true)
+                    guard let self else { return }
+                    self.result = Prompts.clean(text, streaming: true)
+                    self.arrivals.append(Styled.Arrival(end: (self.result as NSString).length, time: Date()))
                 }
                 guard let self, !Task.isCancelled else { return }
                 let finished = Prompts.clean(text, streaming: false)
@@ -524,6 +532,7 @@ struct PanelView: View {
     @State private var originalHeight: CGFloat = 0
     @State private var limitDraft = ""
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     enum Field: Hashable { case tweak, compare, limit }
 
@@ -677,10 +686,34 @@ struct PanelView: View {
                 }
                 .frame(height: height)
                 .accessibilityLabel("Your draft")
+            } else if model.isStreaming && model.result.isEmpty {
+                // Reading: the text Claude is working from, ghosted, with a light passing over it.
+                ShimmerText(
+                    text: Text(model.reading).font(.system(size: Theme.prose.size)).tracking(Theme.prose.kern),
+                    base: Color(Theme.muted).opacity(0.6)
+                )
+                .lineSpacing(Theme.prose.size * (Theme.prose.lineHeight - 1.2))
+                .padding(.top, 3)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .frame(height: height, alignment: .topLeading)
+                .clipped()
+                .transition(.opacity)
+                .accessibilityLabel("Reading your text")
             } else if model.isStreaming {
-                ProseView(content: .styled(Styled.prose(model.result)), followTail: true, height: $textHeight)
-                    .frame(height: height)
-                    .accessibilityLabel("Cleaned-up text, writing")
+                // Writing: new words fade in as they arrive.
+                TimelineView(.animation(paused: reduceMotion)) { context in
+                    ProseView(
+                        content: .styled(Styled.streaming(
+                            model.result, arrivals: model.arrivals,
+                            now: reduceMotion ? .distantFuture : context.date, fade: 0.45
+                        )),
+                        followTail: true,
+                        height: $textHeight
+                    )
+                }
+                .frame(height: height)
+                .transition(.opacity)
+                .accessibilityLabel("Cleaned-up text, writing")
             } else if model.view == .final {
                 ProseView(content: .editable($model.result), height: $textHeight)
                     .frame(height: height)
@@ -692,6 +725,7 @@ struct PanelView: View {
             }
         }
         .padding(EdgeInsets(top: 25, leading: 33, bottom: 18, trailing: 33))
+        .animation(.easeOut(duration: 0.25), value: model.isStreaming && model.result.isEmpty)
     }
 
     // Writing modes
@@ -807,12 +841,18 @@ struct PanelView: View {
                     Circle()
                         .fill(Color(status.isError ? Theme.red : Theme.green))
                         .frame(width: 4, height: 4)
-                    Text(status.text)
-                        .foregroundStyle(status.isError ? Color(Theme.red) : Color(Theme.muted))
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineBox(11)
-                        .accessibilityElement(children: .combine)
+                    Group {
+                        if model.isStreaming {
+                            ShimmerText(text: Text(status.text), base: Color(Theme.muted))
+                        } else {
+                            Text(status.text)
+                                .foregroundStyle(status.isError ? Color(Theme.red) : Color(Theme.muted))
+                        }
+                    }
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineBox(11)
+                    .accessibilityElement(children: .combine)
                 }
                 if model.editingLimit {
                     limitEditor.padding(.leading, model.status == nil ? 0 : 6)
@@ -902,6 +942,38 @@ private struct PanelHeightKey: PreferenceKey {
 }
 
 // MARK: - Small components
+
+/// Text with a soft lavender light passing over it, for while Claude is working.
+/// Holds still with Reduce Motion.
+struct ShimmerText: View {
+    let text: Text
+    let base: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private static let period: TimeInterval = 1.8
+
+    var body: some View {
+        text.foregroundStyle(base)
+            .overlay {
+                if !reduceMotion {
+                    TimelineView(.animation) { context in
+                        let time = context.date.timeIntervalSinceReferenceDate
+                        // A narrow, slightly slanted band that crosses from left to right.
+                        let x = -0.3 + 1.6 * time.truncatingRemainder(dividingBy: Self.period) / Self.period
+                        text.foregroundStyle(Color(Theme.accent))
+                            .mask(LinearGradient(
+                                stops: [
+                                    .init(color: .clear, location: 0),
+                                    .init(color: .black.opacity(0.9), location: 0.5),
+                                    .init(color: .clear, location: 1),
+                                ],
+                                startPoint: UnitPoint(x: x - 0.16, y: 0.1),
+                                endPoint: UnitPoint(x: x + 0.16, y: -0.1)
+                            ))
+                    }
+                }
+            }
+    }
+}
 
 /// A step in the trail: muted, the current one on a soft fill. Click to go back to it.
 struct TrailStep: View {

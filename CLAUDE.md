@@ -157,3 +157,22 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - Closing: Esc, ⌘W, ⌥⌘C again, the × in the title bar, or a click anywhere outside the panel (a
   global mouse monitor, installed only while the panel is open). The × isn't in the Lens mock; it
   was added at Tommy's request.
+
+## Landing page (keep it in step with the app)
+
+- `site/index.html` is **light only** (no dark-mode styles). Headlines use Newsreader, self-hosted in
+  `site/assets/fonts/` (OFL); everything else is the system font, like the app. The page makes no
+  third-party requests.
+- The hero (`.demo`) is a hand-built HTML copy of the panel, animated by a small inline script: select a
+  draft, ⌥⌘C, the cleanup streams in, Changes, a typed change with the trail, ⌘↩ replaces. Its colors
+  are the `Theme` tokens (light) copied into the page's `:root`; its metrics come from `Panel.swift`.
+  The captions under it (`.steps-live`) light up from the demo's `phase` events, so a new or reordered
+  step in the script needs its caption updated too.
+  Other sections also echo the app: the mode names and ⌘ numbers, the diff colors, "Ready to replace ·
+  N words", the trail, the Original button, the menu bar's "Update to Tidy X…".
+- **Any change to the panel's UI or copy updates the site in the same change.** That covers layout,
+  tokens, labels, placeholders, status lines and modes in `Panel.swift`, `PanelPages.swift`, `Theme.swift`
+  and `Store.swift`. Update the demo's markup, styles and script and the sections that echo the app,
+  re-render `assets/hero-light.png` (the og:image), then `wrangler deploy`.
+- With reduced motion (or no JavaScript) the demo shows its static finished frame, so the markup's
+  default state must stay a complete, correct panel.

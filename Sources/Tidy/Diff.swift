@@ -75,6 +75,33 @@ enum Styled {
         NSAttributedString(string: s, attributes: Theme.prose.attributes())
     }
 
+    /// Where a streamed chunk ends (UTF-16 offset into the text) and when it arrived.
+    struct Arrival {
+        let end: Int
+        let time: Date
+    }
+
+    /// The text while it streams: each chunk fades in over `fade` seconds after it arrives,
+    /// so new words settle onto the page instead of popping in.
+    static func streaming(_ s: String, arrivals: [Arrival], now: Date, fade: TimeInterval) -> NSAttributedString {
+        let out = NSMutableAttributedString(string: s, attributes: Theme.prose.attributes())
+        let length = out.length
+        // Newest first; everything older than `fade` is already fully inked.
+        for index in arrivals.indices.reversed() {
+            let progress = now.timeIntervalSince(arrivals[index].time) / fade
+            guard progress < 1 else { break }
+            let start = index > 0 ? min(arrivals[index - 1].end, length) : 0
+            let end = min(arrivals[index].end, length)
+            guard end > start else { continue }
+            let eased = 1 - pow(1 - max(progress, 0), 2)
+            out.addAttribute(
+                .foregroundColor, value: Theme.ink.withAlphaComponent(0.1 + 0.9 * eased),
+                range: NSRange(location: start, length: end - start)
+            )
+        }
+        return out
+    }
+
     /// Changes: removals in red with a strikethrough, additions in green with an underline,
     /// so color is never the only signal.
     static func diff(from original: String, to result: String) -> NSAttributedString {
