@@ -19,9 +19,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         HotKeyCenter.shared.action = { [weak self] in self?.trigger() }
         store.registerHotKey()
 
-        if !store.hasAPIKey { showSettings(.general) }
+        // First launch walks through setup. Someone updating from a version without it, who already
+        // has a key and Accessibility, skips it.
+        if !store.setupDone && store.hasAPIKey && Selection.isTrusted(prompt: false) {
+            store.setupDone = true
+        }
+        if !store.setupDone {
+            panel.showSetup()
+        } else if !store.hasAPIKey {
+            showSettings(.general)
+        }
         Updater.shared.startAutomaticChecks()
-        _ = Selection.isTrusted(prompt: true) // asks for Accessibility on first launch
     }
 
     // MARK: Trigger
@@ -30,6 +38,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard Date().timeIntervalSince(lastTrigger) > 0.3 else { return }
         lastTrigger = Date()
 
+        if panel.isVisible && panel.model.page == .setup {
+            // During setup the shortcut is practice: on its own step it moves on, on the last
+            // step it cleans up the sample. It never closes setup.
+            switch panel.model.setupStep {
+            case .shortcut: panel.model.setupStep = .tryIt
+            case .tryIt: panel.model.tryOnSample()
+            default: break
+            }
+            return
+        }
         if panel.isVisible {
             panel.close()
             return

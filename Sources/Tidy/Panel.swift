@@ -61,6 +61,14 @@ final class PanelController {
         model.openSettings(tab)
     }
 
+    /// Opens the panel on the setup steps (first launch, or Settings › General).
+    func showSetup() {
+        if !isVisible {
+            show(text: "", source: nil, hadSelection: false, notice: nil)
+        }
+        model.openSetup()
+    }
+
     private func copy(_ text: String) {
         let pb = NSPasteboard.general
         pb.clearContents()
@@ -178,6 +186,13 @@ final class PanelController {
             // Esc steps back: limit field → history entry → history list → text → closed.
             if model.editingLimit {
                 model.editingLimit = false
+            } else if model.page == .setup {
+                // Setup steps back one step at a time, then closes.
+                if let previous = SetupStep(rawValue: model.setupStep.rawValue - 1) {
+                    model.setupStep = previous
+                } else {
+                    close()
+                }
             } else if model.historySelection != nil {
                 model.historySelection = nil
             } else if model.page != .editor {
@@ -244,7 +259,7 @@ final class PanelController {
 final class PanelModel: ObservableObject {
     enum ResultView: Hashable { case changes, final }
     enum CommitAction { case replace, copy }
-    enum Page: Hashable { case editor, settings }
+    enum Page: Hashable { case editor, settings, setup }
 
     /// One version of the text in the trail: what the mode made, or what one of your changes made.
     struct Step: Identifiable, Equatable {
@@ -273,6 +288,7 @@ final class PanelModel: ObservableObject {
         }
     }
     @Published var historySelection: UUID?
+    @Published var setupStep: SetupStep = .key
     @Published var editingLimit = false
     /// The trail: the mode's version, then one per change. `currentStep` is the one showing.
     @Published private(set) var steps: [Step] = []
@@ -287,6 +303,8 @@ final class PanelModel: ObservableObject {
     private(set) var arrivals: [Styled.Arrival] = []
     private(set) var sourceApp: NSRunningApplication?
     private(set) var hadSelection = false
+    /// The practice run at the end of setup: when it finishes, the status line says what's next.
+    private var isTrial = false
     private var task: Task<Void, Never>?
     let store: Store
 
@@ -348,6 +366,7 @@ final class PanelModel: ObservableObject {
         steps = []
         currentStep = 0
         notice = nil
+        isTrial = false
         sourceApp = source
         self.hadSelection = hadSelection
         modeID = store.modes.first?.id
@@ -404,10 +423,10 @@ final class PanelModel: ObservableObject {
         showNotice("Saved as a mode. Rename it in Settings › Modes.")
     }
 
-    private func showNotice(_ text: String) {
+    private func showNotice(_ text: String, seconds: UInt64 = 4) {
         notice = text
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 4_000_000_000)
+            try? await Task.sleep(nanoseconds: seconds * 1_000_000_000)
             if self.notice == text { self.notice = nil }
         }
     }
@@ -421,6 +440,25 @@ final class PanelModel: ObservableObject {
             steps = kept + [Step(label: change, instruction: change, text: text)]
         }
         currentStep = steps.count - 1
+    }
+
+    func openSetup() {
+        setupStep = .key
+        page = .setup
+    }
+
+    /// Ends setup with a real cleanup of the sample draft, in the editor.
+    func tryOnSample() {
+        store.setupDone = true
+        reset(original: SetupStep.sample, source: nil, hadSelection: false)
+        isTrial = true
+        run()
+    }
+
+    /// Ends setup without the practice run.
+    func skipSetup() {
+        store.setupDone = true
+        onClose?()
     }
 
     func openSettings(_ tab: SettingsTab) {
@@ -505,6 +543,10 @@ final class PanelModel: ObservableObject {
                     self.error = "Claude returned an empty response. Press ⌘R to try again."
                 } else {
                     self.record(step, finished)
+                    if self.isTrial {
+                        self.isTrial = false
+                        self.showNotice("That’s it. Select text in any app and press \(self.store.shortcut.display).", seconds: 10)
+                    }
                 }
             } catch {
                 guard let self, !Task.isCancelled else { return }
@@ -552,6 +594,8 @@ struct PanelView: View {
                 tray
             case .settings:
                 SettingsPage(model: model, store: store, maxHeight: pageMaxHeight)
+            case .setup:
+                SetupPage(model: model, store: store)
             }
         }
         .padding(1) // the surface's 1 pt border sits inside it, as in CSS
@@ -589,11 +633,13 @@ struct PanelView: View {
                 .padding(.leading, 4)
             }
             Spacer(minLength: 0)
-            IconButton(symbol: "clock.arrow.circlepath", label: "History", active: model.isShowing(.history)) {
-                model.toggleSettings(.history)
-            }
-            IconButton(symbol: "slider.horizontal.3", label: "Settings", active: model.isShowing(.general)) {
-                model.toggleSettings(.general)
+            if model.page != .setup {
+                IconButton(symbol: "clock.arrow.circlepath", label: "History", active: model.isShowing(.history)) {
+                    model.toggleSettings(.history)
+                }
+                IconButton(symbol: "slider.horizontal.3", label: "Settings", active: model.isShowing(.general)) {
+                    model.toggleSettings(.general)
+                }
             }
             IconButton(symbol: "xmark", label: "Close  esc", size: 13) { model.onClose?() }
                 .accessibilityLabel("Close")

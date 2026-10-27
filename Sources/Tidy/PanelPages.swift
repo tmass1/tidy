@@ -22,7 +22,7 @@ struct SettingsPage: View {
             .padding(.top, 10)
             .padding(.bottom, 6)
             switch store.settingsTab {
-            case .general: GeneralTab(store: store)
+            case .general: GeneralTab(store: store) { model.openSetup() }
             case .modes: ModesTab(store: store)
             case .voice: VoiceTab(store: store)
             case .history: HistoryTab(model: model, store: store)
@@ -319,6 +319,7 @@ struct LensField: View {
     let placeholder: String
     @Binding var text: String
     var secure = false
+    var autofocus = false
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -331,6 +332,7 @@ struct LensField: View {
         }
         .textFieldStyle(.plain)
         .focused($focused)
+        .onAppear { if autofocus { focused = true } }
         .lineBox(13)
         .padding(.vertical, 8)
         .padding(.bottom, 1)

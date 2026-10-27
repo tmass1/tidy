@@ -86,7 +86,11 @@ _Updated October 26, 2026._
 ## QA checklist
 
 Core loop
-- [ ] App launches into the menu bar (wand icon), no Dock icon; Settings opens on first launch with no key
+- [ ] App launches into the menu bar (wand icon), no Dock icon; setup opens on first launch (reset with `defaults delete com.tommymassaro.tidy setupDone`)
+- [ ] Setup: a bad key shows the red message; a good one says it works and moves on; offline offers "Save anyway"
+- [ ] Setup: Open System Settings shows macOS's prompt; turning Tidy on moves to the shortcut step by itself
+- [ ] Setup: pressing ⌥⌘C on the shortcut step moves on; on the last step it cleans up the sample; Esc steps back
+- [ ] Settings › General › Run setup opens it again
 - [ ] Saving an API key shows "Key saved"; it survives a relaunch
 - [ ] Accessibility prompt appears; the General tab shows "Allowed" once granted
 - [ ] Select text in Mail, then ⌥⌘C: the panel appears over Mail, and text streams within about a second

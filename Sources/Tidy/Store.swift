@@ -84,6 +84,8 @@ final class Store: ObservableObject {
     /// Character limits per app, keyed by bundle identifier ("" when there's no source app).
     @Published var charLimits: [String: Int] { didSet { UserDefaults.standard.set(charLimits, forKey: "charLimits") } }
     @Published private(set) var hasAPIKey: Bool
+    /// Set once the setup steps are finished or skipped; until then launch opens them.
+    @Published var setupDone: Bool { didSet { UserDefaults.standard.set(setupDone, forKey: "setupDone") } }
     @Published var hotKeyRegistered = true
     @Published var settingsTab: SettingsTab = .general
 
@@ -109,6 +111,7 @@ final class Store: ObservableObject {
         restoreClipboard = defaults.object(forKey: "restoreClipboard") as? Bool ?? true
         voiceUpdatedAt = defaults.object(forKey: "voiceUpdatedAt") as? Date
         charLimits = defaults.dictionary(forKey: "charLimits") as? [String: Int] ?? [:]
+        setupDone = defaults.bool(forKey: "setupDone")
 
         let key = Keychain.read()
         cachedKey = key

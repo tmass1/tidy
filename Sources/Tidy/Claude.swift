@@ -83,6 +83,33 @@ enum Claude {
         }
     }
 
+    enum KeyCheck: Equatable {
+        case valid
+        case rejected(String)
+        case unreachable(String)
+    }
+
+    /// Checks a key against the Models endpoint, which costs nothing, so a bad key shows up in
+    /// setup instead of on the first cleanup.
+    static func checkKey(_ key: String) async -> KeyCheck {
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models?limit=1")!)
+        request.timeoutInterval = 15
+        request.setValue(key, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            switch status {
+            case 200: return .valid
+            case 401: return .rejected("Anthropic didn’t accept that key. Check that you copied all of it.")
+            case 403: return .rejected("That key isn’t allowed to use the API.")
+            default: return .unreachable(errorMessage(status: status, data: data))
+            }
+        } catch {
+            return .unreachable(error.localizedDescription)
+        }
+    }
+
     private static func errorMessage(status: Int, data: Data) -> String {
         let apiMessage = ((try? JSONSerialization.jsonObject(with: data)) as? [String: Any])
             .flatMap { $0["error"] as? [String: Any] }

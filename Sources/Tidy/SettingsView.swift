@@ -11,6 +11,7 @@ enum SettingsTab: Hashable { case general, modes, voice, history }
 
 struct GeneralTab: View {
     @ObservedObject var store: Store
+    var onSetup: @MainActor () -> Void = {}
     @State private var keyDraft = ""
     @State private var trusted = Selection.isTrusted(prompt: false)
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -41,6 +42,9 @@ struct GeneralTab: View {
                 .onChange(of: launchAtLogin) { _, on in store.setLaunchAtLogin(on) }
             CheckboxRow(title: "Put my clipboard back after pasting", isOn: $store.restoreClipboard)
             UpdatesRow(updater: Updater.shared)
+            SettingRow(title: "Setup", detail: "Go through the key, Accessibility, shortcut and a practice run again.") {
+                LensButton(title: "Run setup") { onSetup() }
+            }
         }
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             trusted = Selection.isTrusted(prompt: false)

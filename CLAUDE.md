@@ -52,6 +52,7 @@ Sources/Tidy/
                              PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
   PanelPages.swift           The panel's tabbed Settings page + shared Lens parts (SettingRow, LensField, LensButton…)
   SettingsView.swift         The Settings tabs: General, Modes, Voice, History (+ ShortcutRecorder, UpdatesRow)
+  SetupView.swift            First-launch setup steps in the panel: key (checked), Accessibility, shortcut, practice run
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
   Updater.swift              checks GitHub's latest release daily, downloads Tidy.zip, verifies team Y5V8Y3BH9A, swaps + relaunches
 ```
@@ -77,7 +78,7 @@ Sources/Tidy/
 | What | Where |
 | --- | --- |
 | API key | Keychain, service `com.tommymassaro.tidy`, account `anthropic-api-key` |
-| model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt, charLimits | `UserDefaults` (`com.tommymassaro.tidy`) |
+| model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt, charLimits, setupDone | `UserDefaults` (`com.tommymassaro.tidy`) |
 | modes, history (max 500) | JSON in `~/Library/Application Support/Tidy/` |
 
 Voice learning: `HistoryItem.edited` is true when what was sent differs from Claude's suggestion.
@@ -142,6 +143,14 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   text → closed). There's no mock for the tabs, so they're built from the panel's parts (`SettingRow`,
   `CheckboxRow`, `LensField`, `LensButton`, `SmallButton`). Modes and History drill in (list → item) to
   fit the 602 pt width. Clicking outside the panel doesn't close it while Settings is showing.
+- **Setup** is a third page (`PanelModel.page == .setup`, step in `setupStep`), opened on first launch while
+  `Store.setupDone` is false and from Settings › General › Run setup. Four steps: the API key, checked with a
+  free `GET /v1/models` call (`Claude.checkKey`) and moving on by itself when it works; Accessibility, which
+  polls and moves on once allowed (launch no longer fires the system prompt on its own); the shortcut as
+  keycaps with the recorder; and a practice run on a pre-selected sample. During setup the hotkey never
+  closes the panel: on the shortcut step it moves on, on the last step it cleans up the sample in the editor
+  (`tryOnSample`), which marks setup done. Esc steps back, then closes. Someone updating who already has a
+  key and Accessibility skips setup.
 - **Control tray** (the bottom of the editor): mode chips stay on their own row above it; inside it are
   the trail of steps (only once there's a change), the one text field (`Theme.well`), and the status line
   with Replace. A mode run starts a new trail; each typed change adds a step built on the version showing
