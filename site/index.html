@@ -461,10 +461,28 @@
 
   /* Closing */
   .closing { padding-top: 0; padding-bottom: 96px; }
-  .closing .desk { padding: 96px 40px; text-align: center; }
+  /* The closing banner is a little desktop: a menu bar with Tidy's wand, drifting wallpaper, and the app
+     icon, which bounces like a Dock icon while you hover Download. */
+  .closing .desk { isolation: isolate; padding: 104px 40px 64px; text-align: center; background: #ebe8f6; }
+  .closing .desk::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; box-shadow: inset 0 0 0 1px #ffffff80; pointer-events: none; }
+  .desk-mesh { position: absolute; inset: 0; z-index: -2; overflow: hidden; border-radius: inherit; pointer-events: none; }
+  .desk-mesh i { position: absolute; border-radius: 50%; filter: blur(60px); will-change: transform; animation: drift 24s ease-in-out infinite alternate paused; }
+  .desk-mesh.play i { animation-play-state: running; }
+  .desk-mesh i:nth-child(1) { width: 55%; height: 80%; left: -8%; top: -25%; background: #d9d0ff; }
+  .desk-mesh i:nth-child(2) { width: 45%; height: 70%; right: -6%; top: -20%; background: #cfe3f6; animation-duration: 29s; animation-delay: -8s; }
+  .desk-mesh i:nth-child(3) { width: 45%; height: 70%; right: 0; bottom: -35%; background: #f7dccf; animation-duration: 27s; animation-delay: -15s; }
+  .desk-mesh i:nth-child(4) { width: 40%; height: 65%; left: 2%; bottom: -35%; background: #d3eedf; animation-duration: 33s; animation-delay: -4s; }
+  .menubar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: flex-end; gap: 16px; height: 30px; padding: 0 18px; background: #ffffff8c; border-bottom: 1px solid #ffffffb3; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); font-size: 12px; font-weight: 500; color: var(--ink); }
+  .menubar .wand { display: grid; place-items: center; width: 28px; height: 22px; border-radius: 6px; background: #29283214; }
+  .menubar svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+  .app-icon { display: block; width: 112px; height: 112px; margin: 0 auto 30px; filter: drop-shadow(0 18px 22px #4b3ba640) drop-shadow(0 3px 5px #2720362e); }
+  .closing .desk:has(.button:hover) .app-icon { animation: dock .9s cubic-bezier(.3, .6, .4, 1) 2; }
+  @keyframes dock { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-26px); } 70% { transform: translateY(0); } 82% { transform: translateY(-5px); } }
   .closing h2 { font-size: 64px; margin-bottom: 16px; }
-  .closing p { color: var(--body); margin: 0 0 36px; font-size: 18px; }
+  .closing p { color: var(--body); margin: 0 0 34px; font-size: 18px; }
   .closing .actions { justify-content: center; }
+  .closing .fine { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; margin: 30px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+  .closing .fine li + li::before { content: "·"; margin: 0 10px; opacity: .6; }
 
   /* Footer: the app's dark Lens palette (Theme.swift, dark), scoped here; the rest of the page stays light. */
   .site-foot {
@@ -487,7 +505,7 @@
   @keyframes f-del { from { color: var(--ink); background: #0000; text-decoration-color: #0000; } }
   @keyframes f-ins { from { max-width: 0; padding: 0; } }
 
-  .foot-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .foot-cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
   .foot-card {
     display: flex; align-items: center; gap: 22px; padding: 12px 24px 12px 12px; border-radius: 20px;
     background: #ffffff08; box-shadow: inset 0 0 0 1px #ffffff12;
@@ -502,21 +520,53 @@
   .foot-card:hover h3 b { color: var(--ink); transform: translate(2px, -2px); }
   .foot-card p { font-size: 14px; line-height: 1.5; color: var(--body); margin: 0; }
 
-  /* Tidy UI: the dark theme's colors and a chip, fanning out on hover. */
-  .ui-art .swatches { display: flex; }
-  .ui-art .swatches i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2.5px #0f0e14; margin-left: -6px; transition: margin .35s cubic-bezier(.2, .8, .2, 1); }
-  .ui-art .swatches i:first-child { margin-left: 0; }
-  .foot-card:hover .ui-art .swatches i { margin-left: 3px; }
-  .foot-card:hover .ui-art .swatches i:first-child { margin-left: 0; }
-  .ui-art .chip { padding: 3px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap; background: var(--accent-soft); color: var(--accent); }
-  .ui-art .chip small { opacity: .6; margin-left: 4px; font-size: 10px; }
+  /* Tidy UI: a banner across the footer in the system's own look (tidy-ui.tommymassaro.com): its
+     wordmark, the pink-to-lavender gradient, real numbers, and its Theme Studio starting points
+     as a fan of theme cards that spreads on hover. */
+  .ui-banner {
+    grid-column: 1 / -1; position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: center;
+    padding: 36px 40px 36px 40px; border-radius: 24px;
+    background: radial-gradient(70% 120% at 100% 0%, #de5cc01f, transparent 60%), radial-gradient(60% 100% at 70% 100%, #6350c52e, transparent 70%), #ffffff08;
+    box-shadow: inset 0 0 0 1px #ffffff14; transition: box-shadow .25s, transform .25s;
+  }
+  .ui-banner:hover { box-shadow: inset 0 0 0 1px #de5cc059; transform: translateY(-2px); }
+  .ui-logo { display: block; height: 30px; width: auto; margin-bottom: 22px; }
+  .ui-banner .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .ui-banner .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: linear-gradient(90deg, #de5cc0, #bcabff); }
+  .ui-banner h3 { font-family: var(--serif); font-weight: 400; font-size: 36px; line-height: 1.08; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 14px; }
+  .ui-banner h3 span { display: block; background: linear-gradient(90deg, #ee8fd8, #bcabff); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
+  .ui-banner p { font-size: 15px; line-height: 1.55; color: var(--body); margin: 0 0 22px; max-width: 34em; }
+  .ui-stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0 0 24px; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+  .ui-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: 26px; line-height: 1.1; color: var(--ink); letter-spacing: -0.01em; }
+  .ui-go { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px 9px 16px; border-radius: 10px; background: #eeebf6; color: #282432; font-size: 14px; font-weight: 550; }
+  .ui-go b { font-weight: 400; transition: transform .25s; }
+  .ui-banner:hover .ui-go b { transform: translate(2px, -2px); }
+  .themes { position: relative; height: 210px; }
+  .themes figure { position: absolute; left: 50%; top: 50%; width: 168px; height: 112px; margin: -56px 0 0 -84px; padding: 12px; border-radius: 14px; background: #1f1c27; box-shadow: 0 0 0 1px #ffffff17, 0 18px 30px -14px #000000b3; transform: rotate(var(--r)) translate(var(--x), var(--y)); transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+  .ui-banner:hover .themes figure { transform: rotate(calc(var(--r) * 1.7)) translate(calc(var(--x) * 1.6), calc(var(--y) * 1.4)); }
+  .themes figure i { display: block; height: 7px; border-radius: 4px; background: #ffffff1f; margin-bottom: 7px; }
+  .themes figure i:nth-child(1) { width: 46%; background: var(--c); }
+  .themes figure i:nth-child(2) { width: 82%; }
+  .themes figure i:nth-child(3) { width: 64%; }
+  .themes figure span { position: absolute; left: 12px; bottom: 11px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--body); }
+  .themes figure span::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+  .themes figure:not(:last-child) span, .themes figure:not(:last-child) em { display: none; }
+  .themes figure:not(:last-child) { background: #1a1822; }
+  .themes figure em { position: absolute; right: 12px; bottom: 9px; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-style: normal; font-weight: 600; color: #fff; background: var(--c); }
 
-  /* Tommy: a monogram in a lavender, mint and rose ring that turns on hover. */
-  .me-art .ring { position: relative; width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center; }
-  .me-art .ring::before { content: ""; position: absolute; inset: 0; border-radius: 50%; padding: 1.5px; background: conic-gradient(from 0deg, #bcabff, #a3d8b9, #f1afb7, #bcabff); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 12s linear infinite; animation-play-state: paused; }
-  .foot-card:hover .me-art .ring::before { animation-play-state: running; }
-  @keyframes spin { to { transform: rotate(1turn); } }
-  .me-art .ring span { font-family: var(--serif); font-style: italic; font-size: 30px; letter-spacing: -0.04em; color: var(--ink); }
+  /* Tommy: his brand from tommymassaro.com: the "tommy massaro" wordmark with its coral spark on a
+     faintly warm tile, and the coral-to-pink gradient on the headline (lifted a step to read on dark). */
+  .me-card { --coral: #ff7b79; --pink: #f0679a; }
+  .me-card:hover { box-shadow: inset 0 0 0 1px #ff7b7959; }
+  .foot-card .me-art { background: linear-gradient(135deg, #ff7b7926, #f0679a14), #0f0e14; }
+  .tm-mark { display: inline-flex; align-items: center; gap: 2px; font-size: 15px; letter-spacing: -0.35px; color: #f0eef7; line-height: 1; }
+  .tm-mark b { font-weight: 700; }
+  .tm-mark svg { width: 5px; height: 5px; margin: -7px 0 0 2px; color: var(--coral); fill: none; stroke: currentColor; stroke-width: .6; stroke-linecap: round; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+  .me-card:hover .tm-mark svg { transform: rotate(90deg) scale(1.3); }
+  .me-card .eyebrow { color: var(--coral); }
+  .me-card h3 { display: block; }
+  .me-card h3 b { display: inline-block; margin-left: 4px; }
+  .me-card h3 span { background: linear-gradient(90deg, var(--coral), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
 
   .foot-bottom { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 72px; padding: 26px 0; border-top: 1px solid var(--rule); font-size: 13px; }
   .foot-bottom .wordmark { font-size: 22px; color: var(--ink); }
@@ -701,18 +751,24 @@
     .netlog .when { grid-column: 2; padding-top: 6px; }
     .netlog footer { padding: 12px 18px; }
     .needs > div + div { border-left: 0; border-top: 1px solid var(--rule); }
-    .closing .desk { padding: 64px 20px; }
+    .closing .desk { padding: 72px 20px 48px; }
+    .menubar { height: 26px; padding: 0 12px; }
+    .app-icon { width: 84px; height: 84px; margin-bottom: 22px; }
+    .closing .fine { flex-direction: column; align-items: center; }
+    .closing .fine li + li::before { display: none; }
     .site-foot { padding-top: 72px; border-radius: 24px 24px 0 0; }
     .foot-line { font-size: 32px; margin-bottom: 40px; }
     .foot-cards { grid-template-columns: 1fr; }
     .foot-card { gap: 16px; padding-right: 16px; }
     .foot-card .art { width: 96px; height: 96px; }
-    .ui-art .chip { display: none; }
-    .ui-art .swatches i { width: 18px; height: 18px; margin-left: -5px; }
+    .ui-banner { grid-template-columns: 1fr; gap: 8px; padding: 28px 22px; }
+    .ui-banner h3 { font-size: 28px; }
+    .themes { height: 170px; transform: scale(.8); }
+    .tm-mark { font-size: 11px; }
     .foot-bottom { margin-top: 48px; gap: 12px 20px; }
     .foot-bottom .spacer { flex-basis: 100%; height: 0; }
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } .app-icon { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -1067,6 +1123,13 @@
 
 <div class="wrap closing">
   <div class="desk">
+    <div class="desk-mesh" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="menubar" aria-hidden="true">
+      <span class="wand"><svg viewBox="0 0 14 14"><path d="m2 12 7.5-7.5M8.2 3.2l2.6 2.6M11 1.5v2M10 2.5h2M12.5 5.5v1.6M11.7 6.3h1.6"/></svg></span>
+      <svg viewBox="0 0 14 14"><path d="M1.8 5.2a7.4 7.4 0 0 1 10.4 0M3.7 7.3a4.7 4.7 0 0 1 6.6 0M5.6 9.4a2 2 0 0 1 2.8 0"/><circle cx="7" cy="11.3" r=".6" fill="currentColor"/></svg>
+      <span>Thu 9:41</span>
+    </div>
+    <img class="app-icon" src="assets/icon.png" width="112" height="112" alt="">
     <h2>Send the <em>better version.</em></h2>
     <p>Free, and under a megabyte to download.</p>
     <div class="actions">
@@ -1076,6 +1139,11 @@
       </a>
       <a class="text-link" href="https://github.com/tmass1/tidy/releases">All releases <span>→</span></a>
     </div>
+    <ul class="fine">
+      <li>Version 1.3</li>
+      <li>macOS 14 or later on Apple Silicon</li>
+      <li>Signed and notarized by Apple</li>
+    </ul>
   </div>
 </div>
 
@@ -1083,23 +1151,25 @@
   <div class="wrap">
     <p class="foot-line"><del>sorry for the late reply</del> <ins>Thanks for your patience.</ins></p>
     <div class="foot-cards">
-      <a class="foot-card" href="https://tidy-ui.tommymassaro.com/">
-        <div class="art ui-art" aria-hidden="true">
-          <div class="swatches"><i style="--c:#bcabff"></i><i style="--c:#a3d8b9"></i><i style="--c:#f1afb7"></i><i style="--c:#36323f"></i><i style="--c:#f0eef7"></i></div>
-          <span class="chip">Clean up<small>⌘1</small></span>
+      <a class="ui-banner" href="https://tidy-ui.tommymassaro.com/">
+        <div>
+          <svg class="ui-logo" viewBox="150 372 328 98" role="img" aria-label="Tidy UI"><g><path fill="#393047" d="M223.74,376.25h-50c-11.36,0-20.57,9.21-20.57,20.57v47.87c0,11.36,9.21,20.57,20.57,20.57h50c11.36,0,20.57-9.21,20.57-20.57v-47.87c0-11.36-9.21-20.57-20.57-20.57Z"/><g><path fill="#b6aad3" d="M223.93,413.75c3.04,0,5.5-2.46,5.5-5.5s-2.46-5.5-5.5-5.5-5.5,2.46-5.5,5.5,2.46,5.5,5.5,5.5Z"/><path fill="#f0eef7" d="M228.78,419.99c-.05-.72-.33-1.38-.75-1.92-.62-.78-1.56-1.29-2.63-1.31-.03,0-.06,0-.1,0s-.06,0-.1,0c-1.51,0-4.75,0-6.23,0,0,0-.02,0-.02,0s-.02,0-.02,0c-.46.01-.82.38-.83.84,0,0,0,.01,0,.02,0,0,0,.02,0,.02.07,1.91.12,4.22.12,7.02-.05,6.79-.07,7.12-.43,7.9-1.86,4.03-7.88,4.18-9.97.25l-.47-.89-.1-7.8c-.11-8.79-.1-8.71-1.51-11.56-1.59-3.22-4.34-5.47-8.01-6.55-.81-.24-2.13-.32-6.6-.4v.02s-5.98-.08-5.98-.08v-9.9h-2.26c-1.61.02-2.75.11-3.15.26-3.48,1.28-4.78,3.4-4.78,7.82v1.82h-.21s-3.2,0-3.2,0c-1.92,0-3.48,1.56-3.48,3.48v1.53c0,.31,0,.6,0,.87v1.25c0,1.04.47,1.96,1.19,2.6.01.01.03.03.05.04.61.52,1.39.84,2.25.84h.29c.34.03.71.05,1.11.05h1.99s.1,16.91.1,16.91c0,0,.07,1.71.49,2.69,2.02,5.91,7.01,9.59,13.39,9.88l.42.02s0,0,.01,0c0,0,0,0,0,0,.47,0,.84-.38.85-.85,0,0,0,0,0-.01s0,0,0-.01v-8.98s0,0,0-.01,0,0,0-.01c0-.31-.18-.57-.43-.72-.13-.07-.27-.13-.42-.13h.02c-1.27,0-2.92-.99-3.74-2.54l-.11-.21c-.4-.71-.36-1.53-.36-1.53v-14.55h4.58c.08,0,.15-.02.23-.02,6.96,0,6.84-.01,6.84,10.31,0,6.79.01,6.97.44,8.66,1.35,5.32,5.8,9.49,11.18,10.48,2.6.48,7.84.29,9.84-.36,4.17-1.34,7.35-4,9.12-7.63,1.39-2.85,1.43-3.15,1.43-10.82v-6.74l-.03-.05Z"/></g></g><g><path fill="#f0eef7" d="M354.87,393.51c0-.37-.3-.67-.67-.67h-5.58s-.06,0-.09,0c-.02,0-.05,0-.07,0-.42,0-.82.09-1.19.22-.01,0-.03,0-.04.01-.17.06-.33.15-.49.23-.05.03-.1.05-.15.08-.98.62-1.63,1.71-1.63,2.95,0,.09.02.18.03.27,0,.12-.03.23-.03.36v11.82c-2.97-1.74-6.42-2.76-10.11-2.76-11.06,0-20.02,8.96-20.02,20.02s8.96,20.02,20.02,20.02,20.02-8.96,20.02-20.02c0-.32-.03-.64-.05-.96.03-.21.05-.43.05-.66v-30.93ZM334.85,435.98c-5.48,0-9.93-4.44-9.93-9.93s4.44-9.93,9.93-9.93,9.93,4.44,9.93,9.93-4.44,9.93-9.93,9.93Z"/><path fill="#b6aad3" fill-rule="evenodd" d="M453.87,401.23c-2.27,0-4.12-1.85-4.12-4.12s1.85-4.12,4.12-4.12,4.12,1.85,4.12,4.12-1.85,4.12-4.12,4.12Z"/><path fill="#b6b1c4" d="M433.75,422.98h38.7c.85,0,1.54.69,1.54,1.54v3.12c0,.85-.69,1.54-1.54,1.54h-37.16c-.85,0-1.54-.69-1.54-1.54v-4.66h0Z" transform="translate(879.95 -27.78) rotate(90)"/><path fill="#b6b1c4" d="M439.95,405.96h-1.82c-.47,0-.85.38-.86.85,0,0,0,0,0,0s0,0,0,0v22.87l-.02.14c-1.11,7.63-9.5,12.8-17.43,8.82-3.39-1.7-5.62-5.09-6.15-8.84l-.02-.12s0,0,0,0v-22.87c0-.47-.39-.86-.86-.86h-4.49c-.47,0-.86.38-.86.86v21.31c.14,8.77,6.44,16.42,15.11,17.77,10.92,1.7,20.41-6.38,20.88-16.98v-.1s.02-.1.02-.1c0-.06.02-.11.02-.16v-.11s0-18.96,0-18.96c0-2.23-1.79-3.53-3.53-3.53Z"/><g><circle fill="#b6aad3" cx="304.44" cy="397.84" r="6.12" transform="translate(-59.8 53.9) rotate(-9.22)"/><path fill="#f0eef7" d="M308.34,405.91l-.04-.04h-.14s0,0,0,0,0,0,0,0h-5.8c-1.96,0-3.54,1.59-3.54,3.54v33.11c0,1.96,1.59,3.54,3.54,3.54h3.12c1.96,0,3.54-1.59,3.54-3.54v-35.93l-.04-.04c-.07-.33-.32-.58-.65-.65Z"/></g><path fill="#f0eef7" d="M292.26,405.87h-6.25v-9.9h-2.26c-1.61.02-2.75.11-3.15.26-3.48,1.28-4.78,3.4-4.78,7.82v1.82h-.21s-3.2,0-3.2,0c-1.92,0-3.48,1.56-3.48,3.48v1.53c0,.31,0,.6,0,.87v1.25c0,1.04.47,1.96,1.19,2.6.01.01.03.03.05.04.61.52,1.39.84,2.25.84h.29c.34.03.71.05,1.11.05h1.99s.1,16.91.1,16.91c0,0,.07,1.71.49,2.69,2.02,5.91,7.01,9.59,13.39,9.88l.42.02s0,0,.01,0c0,0,0,0,0,0,.47,0,.84-.38.85-.85,0,0,0,0,0-.01s0,0,0-.01v-8.98s0,0,0-.01,0,0,0-.01c0-.31-.18-.57-.43-.72-.13-.07-.27-.13-.42-.13h.02c-1.27,0-2.92-.99-3.74-2.54l-.11-.21c-.4-.71-.36-1.53-.36-1.53v-14.55h3.56c1.92,0,3.48-1.56,3.48-3.48v-6.34c0-.44-.35-.79-.79-.79Z"/><path fill="#f0eef7" d="M397.5,406.01h-5.7c-.52,0-.84.45-.84.86v20.68c-.7,4.8-4.82,8.49-9.81,8.49s-9.11-3.69-9.81-8.49v-17.96c0-2.33-1.79-3.57-3.5-3.57h-3.2c-.96,0-1.83.39-2.46,1.01-.64.64-1.05,1.52-1.05,2.49,0,.03,0,.06,0,.09,0,.03,0,.06,0,.1v16.6s0,.04.01.06c.14,10.94,9.03,19.77,20.01,19.77,3.57,0,6.92-.95,9.82-2.58-.64,4.29-4.01,7.68-8.3,8.33h-9.02c-1.96,0-3.54,1.59-3.54,3.54v3.12c0,1.96,1.59,3.54,3.54,3.54h7.89c.13,0,.25-.02.37-.04,10.16-.37,18.37-8.3,19.18-18.34h.08v-17.16s0,0,0,0v-16.77c0-2.67-1.92-3.77-3.67-3.77Z"/></g></svg>
+          <span class="eyebrow">The design system behind this panel</span>
+          <h3>You bring the idea. <span>Tidy brings the system.</span></h3>
+          <p>React components, matching Figma assets and a visual Theme Studio, built for designers, developers and their AI agents.</p>
+          <ul class="ui-stats"><li><b>70</b>component families</li><li><b>305</b>shared Figma variables</li><li><b>9</b>themes to start from</li></ul>
+          <span class="ui-go">Explore Tidy UI <b aria-hidden="true">↗</b></span>
         </div>
-        <div class="text">
-          <span class="eyebrow">The interface system</span>
-          <h3>Tidy UI <b aria-hidden="true">↗</b></h3>
-          <p>The parts this panel is built from, glass and all: React components, Figma variables and source.</p>
-        </div>
+        <div class="themes" aria-hidden="true"><figure style="--c:#d39b2a;--r:12deg;--x:74px;--y:20px"><i></i><i></i><i></i><span>Amber</span><em>Replace</em></figure><figure style="--c:#2f5bd3;--r:6deg;--x:38px;--y:6px"><i></i><i></i><i></i><span>Cobalt</span><em>Replace</em></figure><figure style="--c:#5c5a66;--r:-12deg;--x:-74px;--y:20px"><i></i><i></i><i></i><span>Graphite</span><em>Replace</em></figure><figure style="--c:#2f7d5b;--r:-6deg;--x:-38px;--y:6px"><i></i><i></i><i></i><span>Evergreen</span><em>Replace</em></figure><figure style="--c:#6350c5;--r:0deg;--x:0px;--y:-10px"><i></i><i></i><i></i><span>Original</span><em>Replace</em></figure></div>
       </a>
-      <a class="foot-card" href="https://tommymassaro.com/">
-        <div class="art me-art" aria-hidden="true"><div class="ring"><span>tm</span></div></div>
+      <a class="foot-card me-card" href="https://tommymassaro.com/">
+        <div class="art me-art" aria-hidden="true">
+          <span class="tm-mark"><b>tommy</b>massaro<svg viewBox="0 0 5 5" aria-hidden="true"><path d="M2.5 0 L2.5 5 M0 2.5 L5 2.5 M0.7324 0.7324 L4.2676 4.2676 M4.2676 0.7324 L0.7324 4.2676"/></svg></span>
+        </div>
         <div class="text">
           <span class="eyebrow">The designer</span>
-          <h3>Tommy Massaro <b aria-hidden="true">↗</b></h3>
-          <p>Product design leader and former founder. Two decades of products, brands and design systems.</p>
+          <h3>Experienced designer <span>building &amp; shipping</span> <b aria-hidden="true">↗</b></h3>
+          <p>Tommy Massaro, a product design leader with a founder mindset, helping early-stage teams turn complex ideas into products people want to use.</p>
         </div>
       </a>
     </div>
@@ -1400,8 +1470,8 @@
 (() => {
   const io = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('play', e.isIntersecting)), { threshold: 0.35 });
   document.querySelectorAll('.detail .viz').forEach(v => io.observe(v));
-  const mesh = document.querySelector('.hero-mesh');
-  new IntersectionObserver(([e]) => mesh.classList.toggle('play', e.isIntersecting)).observe(mesh);
+  document.querySelectorAll('.hero-mesh, .desk-mesh').forEach(mesh =>
+    new IntersectionObserver(([e]) => mesh.classList.toggle('play', e.isIntersecting)).observe(mesh));
   // The footer's line plays its edit once; the giant wordmark's sweep runs only while it's on screen.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const foot = document.querySelector('.site-foot');
