@@ -170,9 +170,15 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 ## Landing page (keep it in step with the app)
 
 - `site/index.html` is **light only** (no dark-mode styles), except the footer (`.site-foot`), which uses the
-  app's dark `Theme` colors scoped to itself and links to Tidy UI and tommymassaro.com. Headlines use Newsreader, self-hosted in
+  app's dark `Theme` colors scoped to itself and has the Tidy UI banner. Headlines use Newsreader, self-hosted in
   `site/assets/fonts/` (OFL); everything else is the system font, like the app. The page makes no
   third-party requests.
+- Below everything is the shared **signature bar** (`<tommy-signature appearance="light" current-product="tidy">`,
+  `site/signature/`), the same one as Tidy UI's site. Don't edit `signature.js`; copy in a new version of the
+  whole folder when there is one. Its Inter is also declared in the page's own `@font-face`, because Chrome
+  ignores fonts declared inside a shadow root. The component pins itself to the window; Tommy wants it at the
+  end of the page instead, so `tommy-signature { transform: translateZ(0) }` makes the element the containing
+  block for its fixed footer and the bar fills the 52 pt the element reserves after `.site-foot`.
 - The hero (`.demo`) is a hand-built HTML copy of the panel, animated by a small inline script: select a
   draft, ⌥⌘C, the cleanup streams in, Changes, a typed change with the trail, ⌘↩ replaces. Its colors
   are the `Theme` tokens (light) copied into the page's `:root`; its metrics come from `Panel.swift`.
