@@ -496,8 +496,11 @@
   .closing h2 { font-size: 64px; margin-bottom: 16px; }
   .closing p { color: var(--body); margin: 0 0 34px; font-size: 18px; }
   .closing .actions { justify-content: center; }
-  .closing .fine { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; margin: 30px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
-  .closing .fine li + li::before { content: "·"; margin: 0 10px; opacity: .6; }
+  .closing .download-details { display: grid; justify-items: center; gap: 12px; margin-top: 24px; color: var(--body); }
+  .closing .download-requirements { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; font-size: 14px; line-height: 1.5; }
+  .closing .download-version { padding: 3px 9px; border: 1px solid var(--rule); border-radius: 6px; background: #ffffff60; color: var(--ink); font-size: 12px; font-weight: 600; }
+  .closing .download-security { display: flex; align-items: center; gap: 7px; font-size: 13px; line-height: 1.5; }
+  .closing .download-security svg { width: 16px; height: 16px; flex: none; color: var(--green); }
 
   /* Footer: the app's dark Lens palette (Theme.swift, dark), scoped here; the rest of the page stays light. */
   .site-foot {
@@ -745,8 +748,7 @@
     .closing .desk { padding: 72px 20px 48px; }
     .menubar { height: 26px; padding: 0 12px; }
     .app-icon { width: 84px; height: 84px; margin-bottom: 22px; }
-    .closing .fine { flex-direction: column; align-items: center; }
-    .closing .fine li + li::before { display: none; }
+    .closing .download-requirements { flex-direction: column; gap: 8px; }
     .site-foot { padding-top: 72px; border-radius: 24px 24px 0 0; }
     .foot-line { font-size: 32px; margin-bottom: 40px; }
     .foot-cards { grid-template-columns: 1fr; }
@@ -1302,13 +1304,17 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>
         Download for Mac
       </a>
-      <a class="text-link" href="https://github.com/tmass1/tidy/releases">All releases <span>→</span></a>
     </div>
-    <ul class="fine">
-      <li>Version 1.3</li>
-      <li>macOS 14 or later on Apple Silicon</li>
-      <li>Signed and notarized by Apple</li>
-    </ul>
+    <div class="download-details">
+      <div class="download-requirements">
+        <span class="download-version">Version 1.3</span>
+        <span>For Apple Silicon · macOS 14 or later</span>
+      </div>
+      <div class="download-security">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2 17 5v5c0 4-7 8-7 8s-7-4-7-8V5Z"/><path d="m6.5 9.5 2.3 2.3 4.7-4.7"/></svg>
+        <span>Developer-signed. Notarized by Apple.</span>
+      </div>
+    </div>
   </div>
 </div>
 
