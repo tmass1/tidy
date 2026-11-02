@@ -9,6 +9,8 @@ about polish; treat UI details as product decisions, not afterthoughts.
 
 **Read `docs/HANDOFF.md` first.** It has current status, the first tasks, and known risks.
 
+Codex and Claude work on this project in separate worktrees. Read `docs/agent-workflow.md` before making changes.
+
 ## Stack
 
 - Swift Package (no Xcode project), single executable target, **no third-party dependencies**
