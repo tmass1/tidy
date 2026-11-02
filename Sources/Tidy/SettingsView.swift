@@ -1,3 +1,4 @@
+import TidyCore
 import AppKit
 import Carbon
 import Combine
@@ -11,82 +12,59 @@ enum SettingsTab: Hashable { case general, modes, voice, history }
 
 struct GeneralTab: View {
     @ObservedObject var store: Store
-    var onSetup: @MainActor () -> Void = {}
-    @State private var keyDraft = ""
-    @State private var trusted = Selection.isTrusted(prompt: false)
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    var onSetup: @MainActor () -> Void
+    var onReturn: @MainActor () -> Void
+    @State private var trusted: Bool
+    @State private var launchAtLogin: Bool
 
+    init(store: Store, onSetup: @escaping @MainActor () -> Void = {}, onReturn: @escaping @MainActor () -> Void = {}) {
+        self.store = store; self.onSetup = onSetup; self.onReturn = onReturn
+        _trusted = State(initialValue: store.accessibilityAllowed())
+        _launchAtLogin = State(initialValue: store.isDesignPreview ? false : SMAppService.mainApp.status == .enabled)
+    }
+    private var readiness: SetupReadiness {
+        SetupReadiness(hasKey: store.hasAPIKey, hasAccess: trusted, hasShortcut: store.hotKeyRegistered)
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            apiKey
-            SettingRow(title: "Writing model", detail: "Use for your next cleanup.") {
-                ModelMenu(store: store)
-            }
-            SettingRow(
-                title: "Clean up selection",
-                detail: store.hotKeyRegistered
-                    ? "Select your text, then press the shortcut."
-                    : "Another app already uses that shortcut (Hammerspoon, maybe). Pick a different one.",
-                detailIsError: !store.hotKeyRegistered
-            ) {
-                ShortcutRecorder(store: store)
-            }
-            SettingRow(title: "Accessibility") {
-                if trusted {
-                    StatusDot(text: "Allowed")
-                } else {
-                    LensButton(title: "Open System Settings…") { Selection.openAccessibilitySettings() }
+            VStack(alignment: .leading, spacing: 10) {
+                Text(readiness == .ready ? "Ready to clean up" : "Finish setting up Tidy")
+                    .font(.system(size: 20, weight: .medium)).tracking(-0.4).lineBox(20)
+                Text(readiness == .ready
+                     ? "Select text, press \(store.shortcut.display), then use ⌘↩ to replace it."
+                     : readiness.detail)
+                    .font(.system(size: 13)).foregroundStyle(Color(Theme.muted))
+                    .fixedSize(horizontal: false, vertical: true).lineBox(13)
+                LensButton(title: readiness == .ready ? "Back to writing" : "Finish setup", prominent: true) {
+                    if readiness == .ready { onReturn() } else { onSetup() }
                 }
             }
-            CheckboxRow(title: "Open Tidy at login", isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { _, on in store.setLaunchAtLogin(on) }
-            CheckboxRow(title: "Put my clipboard back after pasting", isOn: $store.restoreClipboard)
-            UpdatesRow(updater: Updater.shared)
-            SettingRow(title: "Setup", detail: "Go through the key, Accessibility, shortcut and a practice run again.") {
-                LensButton(title: "Run setup") { onSetup() }
+            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color(Theme.accentSoft)))
+            .padding(.top, 12).padding(.bottom, 8)
+            KeyConnectionEditor(store: store)
+                .padding(.vertical, 16).overlay(alignment: .bottom) { Rule() }
+            SettingRow(title: "Writing model", detail: "Used for your next cleanup.") { ModelMenu(store: store) }
+            SettingRow(title: "Clean up selection",
+                       detail: store.hotKeyRegistered ? "Select text, then press the shortcut." : "This shortcut is in use. Record a different one.",
+                       detailIsError: !store.hotKeyRegistered) { ShortcutRecorder(store: store) }
+            SettingRow(title: "Accessibility", detail: trusted ? "Selection cleanup and paste-back are enabled." : "Needed to read selected text and replace it. You can paste text into Tidy meanwhile.") {
+                if trusted { StatusDot(text: "Allowed") }
+                else { LensButton(title: "Open System Settings…") { Selection.openAccessibilitySettings() } }
             }
-        }
-        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
-            trusted = Selection.isTrusted(prompt: false)
-        }
-    }
-
-    private var apiKey: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Anthropic API key").lineBox(13)
-                Text(store.hasAPIKey ? "Saved in your Keychain. Paste a new key to replace it." : "No key yet")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(Theme.muted))
-                    .lineBox(12)
-            }
-            HStack(alignment: .center, spacing: 12) {
-                LensField(placeholder: store.hasAPIKey ? "Paste a new key" : "sk-ant-…", text: $keyDraft, secure: true)
-                    .onSubmit(saveKey)
-                LensButton(title: "Save", prominent: true, action: saveKey)
-                    .disabled(keyDraft.trimmed.isEmpty)
-            }
-            HStack {
-                if store.hasAPIKey {
-                    StatusDot(text: "Key saved")
-                } else {
-                    StatusDot(text: "No key yet", isError: true)
+            DisclosureGroup("More options", isExpanded: $store.moreOptionsExpanded) {
+                VStack(spacing: 0) {
+                    CheckboxRow(title: "Open Tidy at login", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { _, on in if !store.isDesignPreview { store.setLaunchAtLogin(on) } }
+                    CheckboxRow(title: "Put my clipboard back after pasting", isOn: $store.restoreClipboard)
+                    if !store.isDesignPreview { UpdatesRow(updater: Updater.shared) }
+                    SettingRow(title: "Setup walkthrough", detail: "Connection, selection access, shortcut and an optional sample.") {
+                        LensButton(title: "Review setup", action: onSetup)
+                    }
                 }
-                Spacer()
-                Link("Create a key at console.anthropic.com", destination: URL(string: "https://console.anthropic.com/settings/keys")!)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(Theme.accent))
-            }
+            }.padding(.vertical, 16)
         }
-        .padding(.vertical, 16)
-        .padding(.bottom, 1)
-        .overlay(alignment: .bottom) { Rule() }
-    }
-
-    private func saveKey() {
-        guard !keyDraft.trimmed.isEmpty else { return }
-        store.setAPIKey(keyDraft)
-        keyDraft = ""
+        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in trusted = store.accessibilityAllowed() }
     }
 }
 
@@ -181,6 +159,9 @@ struct ShortcutRecorder: View {
             .help("Click, then press the new shortcut")
         }
         .onDisappear(perform: stop)
+        .onReceive(store.$isRecordingShortcut.removeDuplicates()) { active in
+            if !active && recording { stop() }
+        }
     }
 
     private func toggle() {
@@ -189,6 +170,7 @@ struct ShortcutRecorder: View {
 
     private func start() {
         recording = true
+        store.isRecordingShortcut = true
         HotKeyCenter.shared.unregister()
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let consumed = MainActor.assumeIsolated { () -> Bool in
@@ -217,6 +199,7 @@ struct ShortcutRecorder: View {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
         recording = false
+        store.isRecordingShortcut = false
         store.registerHotKey()
     }
 }

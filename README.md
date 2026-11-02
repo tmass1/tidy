@@ -12,7 +12,7 @@ the [latest release](https://github.com/tmass1/tidy/releases/latest).
 1. Install Apple's command line tools if you don't have them: `xcode-select --install`
 2. In this folder: `bash build.sh`
    It compiles, installs to /Applications, and opens Tidy (the ✨ wand in your menu bar).
-3. Paste your Anthropic API key in Settings. Create one at https://console.anthropic.com/settings/keys
+3. In setup or Settings, connect your Anthropic API key. Tidy checks it before saving; the saved state has a **Change key** action. Create a key at https://console.anthropic.com/settings/keys
 4. Allow Tidy under System Settings › Privacy & Security › Accessibility.
 
 With a Developer ID certificate in your keychain, `build.sh` signs with it and the Accessibility
@@ -46,3 +46,21 @@ Cloudflare Worker (`wrangler.jsonc`), like the other tommymassaro.com sites. Pub
 - Settings & voice profile: `defaults read com.tommymassaro.tidy`
 - Modes and history: `~/Library/Application Support/Tidy/`
 - API key: your login Keychain (service `com.tommymassaro.tidy`)
+
+## iPhone companion prototype
+
+The native SwiftUI app and text Share extension live in [iOS/](iOS/README.md). Open
+`iOS/TidyMobile.xcodeproj` and run the TidyMobile scheme. A labeled sample preview works without
+an API key; live use retains the Mac app’s personal Anthropic key model. Shared prompts, modes,
+streaming and word diff now live in `Sources/TidyCore`, used by both platforms.
+
+See the [source audit](docs/ios/AUDIT.md) and [verification report](docs/ios/VERIFICATION.md).
+iOS settings are shared locally with its extension; automatic Mac/iPhone synchronization is not implemented.
+
+## Desktop design preview
+
+`bash scripts/build-desktop-preview.sh` builds `build/Tidy Preview.app` without installing over Tidy.
+Open that app to try the revised Settings and setup. Its app menu offers Settings, Setup walkthrough,
+Recorded sample and Toggle appearance. Data is temporary and rewrites are recorded; no API requests
+or real Keychain access occur. The regular app’s sample remains a live API rewrite and is labeled accordingly.
+Run `swift test` for the shared and Mac regression suites. See `docs/mac/SETUP-AUDIT.md` for the audit.

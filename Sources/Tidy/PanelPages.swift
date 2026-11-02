@@ -1,3 +1,4 @@
+import TidyCore
 import AppKit
 import SwiftUI
 
@@ -22,7 +23,7 @@ struct SettingsPage: View {
             .padding(.top, 10)
             .padding(.bottom, 6)
             switch store.settingsTab {
-            case .general: GeneralTab(store: store) { model.openSetup() }
+            case .general: GeneralTab(store: store, onSetup: { model.openSetup() }, onReturn: { model.page = .editor })
             case .modes: ModesTab(store: store)
             case .voice: VoiceTab(store: store)
             case .history: HistoryTab(model: model, store: store)

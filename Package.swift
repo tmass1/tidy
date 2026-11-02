@@ -3,15 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "Tidy",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v14), .iOS(.v17)],
+    products: [.library(name: "TidyCore", targets: ["TidyCore"])],
     targets: [
-        .executableTarget(
-            name: "Tidy",
-            path: "Sources/Tidy",
-            linkerSettings: [
-                .linkedFramework("Carbon"),
-                .linkedFramework("ServiceManagement"),
-            ]
-        )
+        .target(name: "TidyCore"),
+        .executableTarget(name: "Tidy", dependencies: ["TidyCore"], path: "Sources/Tidy",
+            linkerSettings: [.linkedFramework("Carbon"), .linkedFramework("ServiceManagement")]),
+        .testTarget(name: "TidyCoreTests", dependencies: ["TidyCore"]),
+        .testTarget(name: "TidyMacTests", dependencies: ["Tidy"], path: "Tests/TidyMacTests")
     ]
 )

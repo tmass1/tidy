@@ -1,0 +1,622 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		089A727A19C952AFF13CFCE6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DF0DA12A6C8A7FA524FE67B1 /* Assets.xcassets */; };
+		277293F81A336CC94C875A4B /* MobileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E42834BC414F45C8B50923 /* MobileStore.swift */; };
+		3AC870E0EA98111B0BEBD04D /* MobileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E42834BC414F45C8B50923 /* MobileStore.swift */; };
+		5B298463CD4ABF3206523613 /* TidyShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DD13C35F8B2C0F1D3E7E59F1 /* TidyShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		688890F89BD251031B0E37F6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE9ADA0F9A449D87F73069E /* SettingsView.swift */; };
+		6B587D0F780C2ACE0707B77C /* Lens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717BB6C921A2AD26AF22857E /* Lens.swift */; };
+		6D77E67ABED5F72F1C365EF9 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A911A16EC168282E0F7CE4 /* ShareViewController.swift */; };
+		6E9DD7B1E3E19DF5053A0B66 /* TidyCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7D99D088F44B1646FB3D99B1 /* TidyCore */; };
+		7709977D821E202C019C25FA /* Lens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717BB6C921A2AD26AF22857E /* Lens.swift */; };
+		7E08D50D338A152A5C04D64F /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3AD5A27FADFEFFC3F71931 /* EditorView.swift */; };
+		90A10403982E23994139564C /* TidyMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5993B01BF658AA439DBD1F5 /* TidyMobileApp.swift */; };
+		BCB8499F28850AC5634122D6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE9ADA0F9A449D87F73069E /* SettingsView.swift */; };
+		C4B814138AEBD4B578A9C432 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3AD5A27FADFEFFC3F71931 /* EditorView.swift */; };
+		E363402204E238E54A7692FF /* TidyMobileUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCFE798188810D5A0F3DB464 /* TidyMobileUITests.swift */; };
+		E767D22174179861E2480BCF /* TidyCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1388278CF4F427FA00743A24 /* TidyCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		32CE9B2A3AA09FAEF5B08322 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F81B24CFD9BE32D80DE0DD81 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0752E9ABAADD387487CA13B;
+			remoteInfo = TidyMobile;
+		};
+		55D064C8B529C00392232A16 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F81B24CFD9BE32D80DE0DD81 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E907E8F2379AAB31831A23C6;
+			remoteInfo = TidyShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BABAE5E371F9C436FA9245D6 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5B298463CD4ABF3206523613 /* TidyShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2FE9ADA0F9A449D87F73069E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3D9D5551A303B45327CAE09E /* TidyMobileUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TidyMobileUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		717BB6C921A2AD26AF22857E /* Lens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lens.swift; sourceTree = "<group>"; };
+		72680E4DFD72557F17EACF44 /* Tidy */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Tidy; path = ..; sourceTree = SOURCE_ROOT; };
+		AE3AD5A27FADFEFFC3F71931 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		C5993B01BF658AA439DBD1F5 /* TidyMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidyMobileApp.swift; sourceTree = "<group>"; };
+		C99F3DF5CD47F23E1BB9C215 /* TidyMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TidyMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D4E42834BC414F45C8B50923 /* MobileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileStore.swift; sourceTree = "<group>"; };
+		DCFE798188810D5A0F3DB464 /* TidyMobileUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidyMobileUITests.swift; sourceTree = "<group>"; };
+		DD13C35F8B2C0F1D3E7E59F1 /* TidyShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TidyShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF0DA12A6C8A7FA524FE67B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E5A911A16EC168282E0F7CE4 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		45498C68A3AEC3D40C4E7E3A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6E9DD7B1E3E19DF5053A0B66 /* TidyCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EE96A57A0DBFC1F24D2EC500 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E767D22174179861E2480BCF /* TidyCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		019900D8BD42D3697C3BE1BD /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				72680E4DFD72557F17EACF44 /* Tidy */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		1E91B13B69991E8BC0241FD4 = {
+			isa = PBXGroup;
+			children = (
+				DF0DA12A6C8A7FA524FE67B1 /* Assets.xcassets */,
+				BADA1CCFE813C27C1B9575C9 /* App */,
+				8C3030B6F2C707B0E24541F1 /* MobileShared */,
+				019900D8BD42D3697C3BE1BD /* Packages */,
+				FF089EA214FB3540D716228C /* ShareExtension */,
+				339962C2EF1E2B3813EDEBE0 /* UITests */,
+				4417F8AEA108DF766BCF5EA0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		339962C2EF1E2B3813EDEBE0 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				DCFE798188810D5A0F3DB464 /* TidyMobileUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		4417F8AEA108DF766BCF5EA0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C99F3DF5CD47F23E1BB9C215 /* TidyMobile.app */,
+				3D9D5551A303B45327CAE09E /* TidyMobileUITests.xctest */,
+				DD13C35F8B2C0F1D3E7E59F1 /* TidyShare.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8C3030B6F2C707B0E24541F1 /* MobileShared */ = {
+			isa = PBXGroup;
+			children = (
+				AE3AD5A27FADFEFFC3F71931 /* EditorView.swift */,
+				717BB6C921A2AD26AF22857E /* Lens.swift */,
+				D4E42834BC414F45C8B50923 /* MobileStore.swift */,
+				2FE9ADA0F9A449D87F73069E /* SettingsView.swift */,
+			);
+			path = MobileShared;
+			sourceTree = "<group>";
+		};
+		BADA1CCFE813C27C1B9575C9 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				C5993B01BF658AA439DBD1F5 /* TidyMobileApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FF089EA214FB3540D716228C /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				E5A911A16EC168282E0F7CE4 /* ShareViewController.swift */,
+			);
+			path = ShareExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9AED47539B2DDE26BAA1AEAC /* TidyMobileUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB99CB14160BEC73AD3620AC /* Build configuration list for PBXNativeTarget "TidyMobileUITests" */;
+			buildPhases = (
+				64168029765ED76983191A7E /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				84F8A79ADA3560520BA01FDD /* PBXTargetDependency */,
+			);
+			name = TidyMobileUITests;
+			packageProductDependencies = (
+			);
+			productName = TidyMobileUITests;
+			productReference = 3D9D5551A303B45327CAE09E /* TidyMobileUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		C0752E9ABAADD387487CA13B /* TidyMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8181D156BA30B91D6068272 /* Build configuration list for PBXNativeTarget "TidyMobile" */;
+			buildPhases = (
+				3705FCD749CF1F53B6B86782 /* Sources */,
+				862CF46926087F1B71417988 /* Resources */,
+				EE96A57A0DBFC1F24D2EC500 /* Frameworks */,
+				BABAE5E371F9C436FA9245D6 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5053AC9677F825A52DE8A869 /* PBXTargetDependency */,
+			);
+			name = TidyMobile;
+			packageProductDependencies = (
+				1388278CF4F427FA00743A24 /* TidyCore */,
+			);
+			productName = TidyMobile;
+			productReference = C99F3DF5CD47F23E1BB9C215 /* TidyMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E907E8F2379AAB31831A23C6 /* TidyShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9B1E486510854EB9E8A82F5E /* Build configuration list for PBXNativeTarget "TidyShare" */;
+			buildPhases = (
+				6D05021E3512DFD2934C156E /* Sources */,
+				45498C68A3AEC3D40C4E7E3A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TidyShare;
+			packageProductDependencies = (
+				7D99D088F44B1646FB3D99B1 /* TidyCore */,
+			);
+			productName = TidyShare;
+			productReference = DD13C35F8B2C0F1D3E7E59F1 /* TidyShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F81B24CFD9BE32D80DE0DD81 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					9AED47539B2DDE26BAA1AEAC = {
+						DevelopmentTeam = Y5V8Y3BH9A;
+						ProvisioningStyle = Automatic;
+						TestTargetID = C0752E9ABAADD387487CA13B;
+					};
+					C0752E9ABAADD387487CA13B = {
+						DevelopmentTeam = Y5V8Y3BH9A;
+						ProvisioningStyle = Automatic;
+					};
+					E907E8F2379AAB31831A23C6 = {
+						DevelopmentTeam = Y5V8Y3BH9A;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F2AF9990F979BA02A7471824 /* Build configuration list for PBXProject "TidyMobile" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1E91B13B69991E8BC0241FD4;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				903D78B09F705F89684FF1AA /* XCLocalSwiftPackageReference ".." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 4417F8AEA108DF766BCF5EA0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C0752E9ABAADD387487CA13B /* TidyMobile */,
+				E907E8F2379AAB31831A23C6 /* TidyShare */,
+				9AED47539B2DDE26BAA1AEAC /* TidyMobileUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		862CF46926087F1B71417988 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				089A727A19C952AFF13CFCE6 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3705FCD749CF1F53B6B86782 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C4B814138AEBD4B578A9C432 /* EditorView.swift in Sources */,
+				6B587D0F780C2ACE0707B77C /* Lens.swift in Sources */,
+				3AC870E0EA98111B0BEBD04D /* MobileStore.swift in Sources */,
+				BCB8499F28850AC5634122D6 /* SettingsView.swift in Sources */,
+				90A10403982E23994139564C /* TidyMobileApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		64168029765ED76983191A7E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E363402204E238E54A7692FF /* TidyMobileUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6D05021E3512DFD2934C156E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7E08D50D338A152A5C04D64F /* EditorView.swift in Sources */,
+				7709977D821E202C019C25FA /* Lens.swift in Sources */,
+				277293F81A336CC94C875A4B /* MobileStore.swift in Sources */,
+				688890F89BD251031B0E37F6 /* SettingsView.swift in Sources */,
+				6D77E67ABED5F72F1C365EF9 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5053AC9677F825A52DE8A869 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E907E8F2379AAB31831A23C6 /* TidyShare */;
+			targetProxy = 55D064C8B529C00392232A16 /* PBXContainerItemProxy */;
+		};
+		84F8A79ADA3560520BA01FDD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0752E9ABAADD387487CA13B /* TidyMobile */;
+			targetProxy = 32CE9B2A3AA09FAEF5B08322 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		121C46A187F5CC55660D048F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Y5V8Y3BH9A;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4A6967B03D533CE30B5A87CB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/App.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommymassaro.tidy.mobile;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		60829B8159BE83467CCB1A76 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/Share.entitlements;
+				INFOPLIST_FILE = "Config/Share-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommymassaro.tidy.mobile.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		673BAE0BA8080500DE3DDCED /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = Y5V8Y3BH9A;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9ADB47A8E5E5166A8273CE57 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/App.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommymassaro.tidy.mobile;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B5747F5D4F06738CC3D2D453 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommymassaro.tidy.mobile.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = TidyMobile;
+			};
+			name = Release;
+		};
+		C20FD2116DF140D141EFB8FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/Share.entitlements;
+				INFOPLIST_FILE = "Config/Share-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommymassaro.tidy.mobile.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F99588D56088425657637DA2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommymassaro.tidy.mobile.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = TidyMobile;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9B1E486510854EB9E8A82F5E /* Build configuration list for PBXNativeTarget "TidyShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				60829B8159BE83467CCB1A76 /* Debug */,
+				C20FD2116DF140D141EFB8FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BB99CB14160BEC73AD3620AC /* Build configuration list for PBXNativeTarget "TidyMobileUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F99588D56088425657637DA2 /* Debug */,
+				B5747F5D4F06738CC3D2D453 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E8181D156BA30B91D6068272 /* Build configuration list for PBXNativeTarget "TidyMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A6967B03D533CE30B5A87CB /* Debug */,
+				9ADB47A8E5E5166A8273CE57 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F2AF9990F979BA02A7471824 /* Build configuration list for PBXProject "TidyMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				121C46A187F5CC55660D048F /* Debug */,
+				673BAE0BA8080500DE3DDCED /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		903D78B09F705F89684FF1AA /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1388278CF4F427FA00743A24 /* TidyCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TidyCore;
+		};
+		7D99D088F44B1646FB3D99B1 /* TidyCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TidyCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F81B24CFD9BE32D80DE0DD81 /* Project object */;
+}

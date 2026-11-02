@@ -1,30 +1,31 @@
 import Foundation
 
-struct ModelOption: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let short: String
+public struct ModelOption: Identifiable, Hashable {
+    public let id: String
+    public let name: String
+    public let short: String
 }
 
-struct ClaudeError: LocalizedError {
-    let message: String
-    var errorDescription: String? { message }
+public struct ClaudeError: LocalizedError {
+    public let message: String
+    public init(message: String) { self.message = message }
+    public var errorDescription: String? { message }
 }
 
 /// Minimal streaming client for the Anthropic Messages API.
-enum Claude {
-    static let models: [ModelOption] = [
+public enum Claude {
+    public static let models: [ModelOption] = [
         ModelOption(id: "claude-haiku-5-5", name: "Haiku 5.5 · fastest", short: "Haiku"),
         ModelOption(id: "claude-sonnet-5-5", name: "Sonnet 5.5 · balanced", short: "Sonnet"),
         ModelOption(id: "claude-opus-5-5", name: "Opus 5.5 · most careful", short: "Opus"),
     ]
 
-    static func shortName(_ id: String) -> String {
+    public static func shortName(_ id: String) -> String {
         models.first { $0.id == id }?.short ?? id
     }
 
-    static func stream(
-        apiKey: String, model: String, system: String, user: String, maxTokens: Int = 4096
+    public static func stream(
+        apiKey: String, model: String, system: String, user: String, maxTokens: Int = 4096, requireComplete: Bool = false
     ) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
@@ -52,7 +53,14 @@ enum Claude {
                         throw ClaudeError(message: Claude.errorMessage(status: status, data: data))
                     }
 
+                    var decoder = MessageStreamDecoder()
                     for try await line in bytes.lines {
+                        try Task.checkCancellation()
+                        if requireComplete {
+                            if let text = try decoder.consume(line) { continuation.yield(text) }
+                            if decoder.completed { continuation.finish(); return }
+                            continue
+                        }
                         guard line.hasPrefix("data:") else { continue }
                         let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
                         guard let data = payload.data(using: .utf8),
@@ -74,6 +82,7 @@ enum Claude {
                             break
                         }
                     }
+                    if requireComplete { try decoder.finish() }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -83,7 +92,7 @@ enum Claude {
         }
     }
 
-    enum KeyCheck: Equatable {
+    public enum KeyCheck: Equatable {
         case valid
         case rejected(String)
         case unreachable(String)
@@ -91,7 +100,7 @@ enum Claude {
 
     /// Checks a key against the Models endpoint, which costs nothing, so a bad key shows up in
     /// setup instead of on the first cleanup.
-    static func checkKey(_ key: String) async -> KeyCheck {
+    public static func checkKey(_ key: String) async -> KeyCheck {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models?limit=1")!)
         request.timeoutInterval = 15
         request.setValue(key, forHTTPHeaderField: "x-api-key")

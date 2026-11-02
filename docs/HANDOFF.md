@@ -164,3 +164,11 @@ Settings
 
 - `~/.hammerspoon/cleanup.lua`: the original Hammerspoon version. Its `require` line in
   `~/.hammerspoon/init.lua` is commented out so it doesn't take ⌥⌘C.
+
+## Desktop setup refinement — October 30, 2026
+
+See `docs/mac/SETUP-AUDIT.md` for the current setup/Settings changes and verification. The older
+QA checklist above is historical: connection now waits for Continue, offline checks do not offer
+Save anyway, and the Accessibility step waits for Continue after permission is granted. The
+optional sample is explicitly live, with a persistent label and Exit sample. After design approval, the signed build was installed locally on October 30; the prior app is
+backed up. Quit/reopen Tidy to load it. See the audit for the backup path and pending live checks.

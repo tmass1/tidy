@@ -5,3 +5,11 @@ build.log
 .DS_Store
 *.xcodeproj/
 xcuserdata/
+
+# Native iOS project is reproducible from iOS/project.yml, and opens without XcodeGen.
+!iOS/TidyMobile.xcodeproj/
+iOS/TidyMobile.xcodeproj/*
+!iOS/TidyMobile.xcodeproj/project.pbxproj
+!iOS/TidyMobile.xcodeproj/xcshareddata/
+iOS/TidyMobile.xcodeproj/xcshareddata/*
+!iOS/TidyMobile.xcodeproj/xcshareddata/xcschemes/
