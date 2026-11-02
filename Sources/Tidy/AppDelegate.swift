@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else if !store.hasAPIKey {
             showSettings(.general)
         }
+        Updater.shared.isBusy = { [weak self] in self?.panel.isVisible ?? false }
         Updater.shared.startAutomaticChecks()
     }
 
@@ -121,8 +122,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func menuHistory() { showSettings(.history) }
     @objc private func menuUpdates() {
+        if let release = Updater.shared.available {
+            UpdateWindow.shared.show(release, activate: true)
+            return
+        }
         showSettings(.general)
-        if Updater.shared.available == nil { Task { await Updater.shared.check() } }
+        Task { await Updater.shared.check() }
     }
     @objc private func menuSettings() { showSettings(.general) }
     @objc private func menuQuit() { NSApp.terminate(nil) }

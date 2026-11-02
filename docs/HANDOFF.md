@@ -44,8 +44,12 @@ _Updated October 26, 2026._
   **v1.0 is published** (notarized, stapled; Gatekeeper accepts it as a browser download), and the
   site's Download buttons serve it. The `tidy-notary` keychain profile is saved on Tommy's Mac.
 - **In-app updates:** `Updater.swift` checks the latest release daily and from Settings › General
-  ("Tidy 1.0 · Check for updates") and the menu bar ("Check for Updates…"). Untested end to end until
-  a second release exists.
+  ("Tidy 1.0 · Check for updates") and the menu bar ("Check for Updates…"). A daily check that finds a
+  new version opens the update window (`UpdateWindow.swift`, laid out like Sparkle's in XReader, but no
+  dependency): release notes, "Automatically download and install updates", Skip This Version / Remind
+  Me Later / Install Update. With auto-install on it updates by itself once the panel is closed. The
+  window ships in the first release after 1.3.1, so people first see it on the update after that one.
+  `release.sh` now takes the notes as its second argument; they're the window's bullet points.
 
 - All source is written (~2,000 lines across 10 files) and is in git at https://github.com/tmass1/tidy.
 - **Compiles on macOS** (Apple Swift 6.4 toolchain, Swift 5 language mode) with zero errors and zero
@@ -125,6 +129,11 @@ Settings
 - [ ] Voice: after two or three edited sends, "Update from N new edits" produces bullet points; "Learn from these" works with pasted samples
 - [ ] History: entries appear after Replace/Copy, search filters, Copy buttons work, Clear asks first
 - [ ] Open at login toggles (check System Settings › General › Login Items)
+- [ ] Update window: with an older build installed and a newer release out, it opens a few seconds after
+      launch without taking focus; Install Update relaunches into the new version; Skip This Version keeps it
+      from opening again for that version (the menu still offers "Update to Tidy X…"); Remind Me Later brings
+      it back on the next daily check; closing it returns focus to the app you were in
+- [ ] With "Install updates automatically" on, an update waits while the panel is open, then installs and relaunches
 
 ## Known risks / things to watch
 

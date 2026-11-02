@@ -20,7 +20,7 @@ about polish; treat UI details as product decisions, not afterthoughts.
 
 ```bash
 bash build.sh            # compile (release, arm64), bundle Tidy.app, sign, install to /Applications, launch
-bash release.sh 1.1      # signed + notarized Tidy.zip, tag v1.1, GitHub release (the updater's source)
+bash release.sh 1.4 "- What changed"   # signed + notarized Tidy.zip, tag, GitHub release with those notes
 wrangler deploy          # publish site/ to tidy-app.tommymassaro.com (Cloudflare Worker, custom domain)
 swift build              # compile only (fast check while iterating)
 tail -50 build.log       # build.sh writes all its output here
@@ -55,6 +55,7 @@ Sources/Tidy/
   SetupView.swift            First-launch setup steps in the panel: key (checked), Accessibility, shortcut, practice run
   Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
   Updater.swift              checks GitHub's latest release daily, downloads Tidy.zip, verifies team Y5V8Y3BH9A, swaps + relaunches
+  UpdateWindow.swift         "A new version of Tidy is available." window, laid out like Sparkle's (notes, skip, remind, install)
 ```
 
 ## How a cleanup flows
@@ -79,6 +80,7 @@ Sources/Tidy/
 | --- | --- |
 | API key | Keychain, service `com.tommymassaro.tidy`, account `anthropic-api-key` |
 | model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt, charLimits, setupDone | `UserDefaults` (`com.tommymassaro.tidy`) |
+| autoInstallUpdates, skippedUpdateVersion | `UserDefaults`, owned by `Updater` |
 | modes, history (max 500) | JSON in `~/Library/Application Support/Tidy/` |
 
 Voice learning: `HistoryItem.edited` is true when what was sent differs from Claude's suggestion.
@@ -121,6 +123,11 @@ and replaces `voiceProfile` with bullet points. It runs on demand (Settings › 
 - The app has no visible main menu, but `AppDelegate.installMainMenu()` must stay: it's what gives
   text fields their Edit commands.
 - Don't make the panel activating. A normal activating window breaks returning focus to the source app.
+- **Updates** don't use Sparkle (Tommy decided against the dependency and the download size). `Updater` reads
+  GitHub's latest release; the release body's "- " bullets are the update window's notes, so `release.sh` takes
+  written notes (default: app commit subjects since the last tag, not site/docs). A daily check opens the window
+  without activating Tidy, and waits while the panel is open; the menu's "Update to Tidy X…" opens it activated.
+  Skip only stops the automatic window for that version. Auto-install installs silently once the panel closes.
 
 ## Panel design (Lens)
 

@@ -2,7 +2,9 @@ import AppKit
 import Security
 
 /// Updates Tidy from the latest GitHub release of tmass1/tidy (built and notarized by
-/// release.sh). Checks quietly once a day; installing replaces the app and relaunches it.
+/// release.sh). Checks once a day; a new version opens the update window (UpdateWindow.swift),
+/// or installs by itself when "Automatically download and install updates" is on. Installing
+/// replaces the app and relaunches it.
 @MainActor
 final class Updater: ObservableObject {
     static let shared = Updater()
@@ -19,9 +21,30 @@ final class Updater: ObservableObject {
     struct Release: Equatable {
         let version: String
         let download: URL
+        /// The release notes' bullet points, as inline Markdown.
+        let notes: [String]
     }
 
     @Published private(set) var state: State = .idle
+
+    /// Installs new versions without asking, once the panel isn't open.
+    @Published var autoInstall: Bool {
+        didSet { UserDefaults.standard.set(autoInstall, forKey: "autoInstallUpdates") }
+    }
+
+    /// The version "Skip This Version" was pressed for; automatic checks don't open the window for it.
+    private var skippedVersion: String? {
+        get { UserDefaults.standard.string(forKey: "skippedUpdateVersion") }
+        set { UserDefaults.standard.set(newValue, forKey: "skippedUpdateVersion") }
+    }
+
+    /// True while Tidy is in use (the panel is open). Set by AppDelegate; the window and automatic
+    /// installs wait until it's false.
+    var isBusy: (@MainActor () -> Bool)?
+
+    private init() {
+        autoInstall = UserDefaults.standard.bool(forKey: "autoInstallUpdates")
+    }
 
     /// Only builds signed by this team are installed.
     private static let teamID = "Y5V8Y3BH9A"
@@ -42,14 +65,16 @@ final class Updater: ObservableObject {
     func startAutomaticChecks() {
         Task {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
-            await check()
+            await check(automatic: true)
         }
         timer = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { _ in
-            Task { @MainActor in await Updater.shared.check() }
+            Task { @MainActor in await Updater.shared.check(automatic: true) }
         }
     }
 
-    func check() async {
+    /// An automatic check acts on what it finds: it installs (auto-install on) or opens the window,
+    /// unless that version was skipped. A check from Settings only updates `state`.
+    func check(automatic: Bool = false) async {
         guard state != .checking, state != .installing else { return }
         state = .checking
         do {
@@ -71,17 +96,37 @@ final class Updater: ObservableObject {
                 state = .upToDate
                 return
             }
-            state = .available(Release(version: version, download: url))
+            let found = Release(version: version, download: url, notes: Self.notes(from: release.body ?? ""))
+            state = .available(found)
+            guard automatic else { return }
+            if autoInstall {
+                await waitUntilIdle()
+                await install(found)
+            } else if version != skippedVersion {
+                await waitUntilIdle()
+                if available == found { UpdateWindow.shared.show(found, activate: false) }
+            }
         } catch {
             NSLog("Tidy: update check failed: \(error.localizedDescription)")
             state = .failed("Couldn't check for updates. \(error.localizedDescription)")
         }
     }
 
+    func skip(_ release: Release) {
+        skippedVersion = release.version
+    }
+
+    /// Waits while the panel is open, checking every minute.
+    private func waitUntilIdle() async {
+        while isBusy?() == true {
+            try? await Task.sleep(nanoseconds: 60_000_000_000)
+        }
+    }
+
     /// Downloads the release, checks its signature, then hands off to a small script that swaps
     /// the app once Tidy has quit and opens the new one.
-    func install() async {
-        guard let release = available else { return }
+    func install(_ release: Release? = nil) async {
+        guard state != .installing, let release = release ?? available else { return }
         let destination = Bundle.main.bundleURL
         guard FileManager.default.isWritableFile(atPath: destination.deletingLastPathComponent().path) else {
             state = .failed("Move Tidy to your Applications folder to update it.")
@@ -116,6 +161,23 @@ final class Updater: ObservableObject {
     }
 
     // MARK: Helpers
+
+    /// The bullet points of a release's notes ("- Item" or "* Item"). GitHub's generated
+    /// "by @name in https://…" endings, headings and the "Full Changelog" link are left out.
+    /// Notes without bullets use their plain lines instead.
+    static func notes(from body: String) -> [String] {
+        let lines = body.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }
+        let bullets = lines.compactMap { line -> String? in
+            guard line.hasPrefix("- ") || line.hasPrefix("* ") else { return nil }
+            var item = String(line.dropFirst(2))
+            if let range = item.range(of: #" by @\S+ in https://\S+$"#, options: .regularExpression) {
+                item.removeSubrange(range)
+            }
+            return item.isEmpty ? nil : item
+        }
+        if !bullets.isEmpty { return bullets }
+        return lines.filter { !$0.isEmpty && !$0.hasPrefix("#") && !$0.hasPrefix("**Full Changelog**") && !$0.hasPrefix("<!--") }
+    }
 
     /// "1.10" is newer than "1.9"; missing parts count as 0.
     static func isNewer(_ version: String, than current: String) -> Bool {
@@ -152,6 +214,7 @@ final class Updater: ObservableObject {
 
     private struct GitHubRelease: Decodable {
         let tag_name: String
+        let body: String?
         let assets: [Asset]
         struct Asset: Decodable {
             let name: String

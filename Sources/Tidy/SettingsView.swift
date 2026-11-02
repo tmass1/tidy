@@ -90,7 +90,8 @@ struct GeneralTab: View {
     }
 }
 
-/// "Tidy 1.0 · Up to date", with Check for updates or Update and relaunch.
+/// "Tidy 1.0 · Up to date", with Check for updates or Update and relaunch, then the auto-install
+/// checkbox (the same setting as the update window's).
 struct UpdatesRow: View {
     @ObservedObject var updater: Updater
 
@@ -105,6 +106,11 @@ struct UpdatesRow: View {
                 LensButton(title: "Check for updates") { Task { await updater.check() } }
             }
         }
+        CheckboxRow(
+            title: "Install updates automatically",
+            detail: "Waits until the panel is closed, then updates and relaunches.",
+            isOn: $updater.autoInstall
+        )
     }
 
     private var detail: String {
