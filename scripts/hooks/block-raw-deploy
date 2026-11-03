@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Claude Code PreToolUse hook: block a raw production deploy and point to scripts/deploy-site.
+
+Reads the hook's JSON on stdin. Exit 2 blocks the Bash command and shows the message to Claude.
+Read-only Wrangler commands (deployments list/status, versions view), `wrangler dev`, dry runs
+and `wrangler rollback` (the way back after a bad deploy) are allowed.
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+
+# Backticks aren't separators: they're far more often markdown in a commit message or heredoc than
+# command substitution, and `$(…)` is still caught.
+SEPARATORS = re.compile(r"&&|\|\||[;|&\n]|\$\(")
+WRANGLER = re.compile(r"(?:.*/)?wrangler(?:@[\w.\-]+)?")
+RUNNERS = {"npx", "bunx", "pnpx"}
+PREFIXES = {"sudo", "env", "command", "exec", "time", "nohup"}
+SHELLS = {"sh", "bash", "zsh"}
+
+MESSAGE = """Blocked: production deploys of the Tidy site go through scripts/deploy-site, never a raw
+`wrangler deploy`. It checks that nothing already live would be lost and records the commit.
+
+Deploy only when Tommy names production as the target. Run `scripts/deploy-site --check` first and
+show him the output, then `scripts/deploy-site` (add --yes only after he has said yes in chat).
+Never work around a stop. See docs/deploying.md."""
+
+
+def blocks(command: str) -> bool:
+    for segment in SEPARATORS.split(command):
+        words = [w.strip("'\"()") for w in segment.split()]
+        words = [w for w in words if w]
+        while words and (words[0] in PREFIXES or re.fullmatch(r"\w+=\S*", words[0])):
+            words = words[1:]
+        if words and words[0] in SHELLS and "-c" in words:
+            if blocks(" ".join(words[words.index("-c") + 1:])):
+                return True
+            continue
+        if words and words[0] in RUNNERS:
+            words = [w for w in words[1:] if w not in ("--yes", "-y")]
+        elif len(words) > 1 and words[0] in ("pnpm", "yarn") and words[1] in ("dlx", "exec"):
+            words = words[2:]
+        if not words or not WRANGLER.fullmatch(words[0]):
+            continue
+        rest = words[1:]
+        if ("deploy" in rest or "publish" in rest) and "--dry-run" not in rest:
+            return True
+    return False
+
+
+def main() -> int:
+    try:
+        data = json.load(sys.stdin)
+    except ValueError:
+        return 0
+    command = (data.get("tool_input") or {}).get("command") or ""
+    if blocks(command):
+        print(MESSAGE, file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -14,7 +14,7 @@ Ignored local config and signing material aren't copied into worktrees. Never co
 
 Each worktree compiles on its own: `swift build` uses that worktree's `.build`. That's the check to run while iterating and before handing off.
 
-`bash build.sh` replaces `/Applications/Tidy.app` and launches it, and on a Mac without the Developer ID certificate it resets Tidy's Accessibility grant. Only one checkout can own the installed app, so ask Tommy before running it. Never run `release.sh` or `wrangler deploy` unless he asks.
+`bash build.sh` replaces `/Applications/Tidy.app` and launches it, and on a Mac without the Developer ID certificate it resets Tidy's Accessibility grant. Only one checkout can own the installed app, so ask Tommy before running it. Never run `release.sh` or deploy the site unless he asks, and deploy only with `scripts/deploy-site` (see `AGENTS.md`).
 
 Preview the landing page (`site/`) on your own port:
 

@@ -9,7 +9,8 @@ about polish; treat UI details as product decisions, not afterthoughts.
 
 **Read `docs/HANDOFF.md` first.** It has current status, the first tasks, and known risks.
 
-Codex and Claude work on this project in separate worktrees. Read `docs/agent-workflow.md` before making changes.
+Codex and Claude work on this project in separate worktrees. Read `AGENTS.md` (the rules every agent follows,
+including how to deploy) and `docs/agent-workflow.md` before making changes.
 
 ## Stack
 
@@ -23,7 +24,8 @@ Codex and Claude work on this project in separate worktrees. Read `docs/agent-wo
 ```bash
 bash build.sh            # compile (release, arm64), bundle Tidy.app, sign, install to /Applications, launch
 bash release.sh 1.4 "- What changed"   # signed + notarized Tidy.zip, tag, GitHub release with those notes
-wrangler deploy          # publish site/ to tidy-app.tommymassaro.com (Cloudflare Worker, custom domain)
+scripts/deploy-site --check   # before any production deploy: is anything live missing here? (docs/deploying.md)
+scripts/deploy-site      # the only way to publish site/ to tidy-app.tommymassaro.com (never a raw wrangler deploy)
 swift build              # compile only (fast check while iterating)
 tail -50 build.log       # build.sh writes all its output here
 log stream --predicate 'process == "Tidy"' --level debug   # runtime logs (NSLog)
@@ -38,7 +40,9 @@ Package.swift
 build.sh                     build + bundle + sign (Developer ID if present, else ad-hoc) + install
 release.sh                   version bump, notarize, tag, `gh release create` with Tidy.zip
 site/                        landing page (static HTML, Lens tokens) at tidy-app.tommymassaro.com
-wrangler.jsonc               static-assets Cloudflare Worker serving site/; `wrangler deploy` publishes it
+wrangler.jsonc               static-assets Cloudflare Worker serving site/; `scripts/deploy-site` publishes it
+scripts/deploy-site          production deploy with the live-work check (+ scripts/tests, scripts/hooks)
+.claude/settings.json        hook that blocks a raw `wrangler deploy` and points to scripts/deploy-site
 Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tommymassaro.tidy
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
@@ -201,6 +205,6 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - **Any change to the panel's UI or copy updates the site in the same change.** That covers layout,
   tokens, labels, placeholders, status lines and modes in `Panel.swift`, `PanelPages.swift`, `Theme.swift`
   and `Store.swift`. Update the demo's markup, styles and script and the sections that echo the app,
-  re-render `assets/hero-light.png` (the og:image), then `wrangler deploy`.
+  re-render `assets/hero-light.png` (the og:image), then deploy with `scripts/deploy-site` when Tommy asks.
 - With reduced motion (or no JavaScript) the demo shows its static finished frame, so the markup's
   default state must stay a complete, correct panel.

@@ -35,7 +35,7 @@ _Updated October 26, 2026._
 
 - **Public** at https://github.com/tmass1/tidy. Landing page in `site/`, deployed to
   https://tidy-app.tommymassaro.com by a static-assets Cloudflare Worker (`wrangler.jsonc`), like
-  Tommy's other sites; `wrangler deploy` publishes it and Cloudflare manages the DNS record. GitHub
+  Tommy's other sites; `scripts/deploy-site` publishes it (see `docs/deploying.md`) and Cloudflare manages the DNS record. GitHub
   Pages is turned off. The page is light only, with Newsreader headlines. The hero is an animated HTML copy of the panel (see CLAUDE.md, "Landing page":
   panel UI or copy changes must update it). No LICENSE yet (so the page says "source on
   GitHub", not "open source").
