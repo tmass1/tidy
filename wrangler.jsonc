@@ -1,6 +1,6 @@
 {
   // The Tidy landing page, hosted like the other tommymassaro.com sites: a static-assets Worker
-  // (no `main`, nothing runs at request time) serving ./site. Deploy with scripts/deploy-site.
+  // (no `main`, nothing runs at request time) serving ./site. Deploy with scripts/deploy-production.py.
   // The custom-domain route makes Cloudflare create and manage the DNS record and certificate.
   "name": "tidy-app",
   "account_id": "2fbdb9eace50ce37fd227a7928e7e925",

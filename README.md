@@ -27,8 +27,8 @@ latest release. See the top of `release.sh` for the one-time notarization setup.
 
 The landing page lives in `site/` and is served at https://tidy-app.tommymassaro.com by a static-assets
 Cloudflare Worker (`wrangler.jsonc`), like the other tommymassaro.com sites. Publish changes with
-`scripts/deploy-site` (run `--check` first), which makes sure nothing already live is left out; see
-`docs/deploying.md`.
+`python3 scripts/deploy-production.py` (run it with `--check` first), which makes sure nothing already
+live is left out; see `docs/production-deploy.md`.
 
 ## In the panel
 

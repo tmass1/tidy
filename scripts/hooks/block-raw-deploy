@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Claude Code PreToolUse hook: block a raw production deploy and point to scripts/deploy-site.
+"""Claude Code PreToolUse hook: block a raw production deploy and point to scripts/deploy-production.py.
 
 Reads the hook's JSON on stdin. Exit 2 blocks the Bash command and shows the message to Claude.
 Read-only Wrangler commands (deployments list/status, versions view), `wrangler dev`, dry runs
@@ -19,12 +19,13 @@ RUNNERS = {"npx", "bunx", "pnpx"}
 PREFIXES = {"sudo", "env", "command", "exec", "time", "nohup"}
 SHELLS = {"sh", "bash", "zsh"}
 
-MESSAGE = """Blocked: production deploys of the Tidy site go through scripts/deploy-site, never a raw
+MESSAGE = """Blocked: production deploys of the Tidy site go through the deploy check, never a raw
 `wrangler deploy`. It checks that nothing already live would be lost and records the commit.
 
-Deploy only when Tommy names production as the target. Run `scripts/deploy-site --check` first and
-show him the output, then `scripts/deploy-site` (add --yes only after he has said yes in chat).
-Never work around a stop. See docs/deploying.md."""
+Deploy only when Tommy names production as the target. Run
+`python3 scripts/deploy-production.py --check` first and show him the whole output, then
+`python3 scripts/deploy-production.py` (add --yes only after he has said yes in chat).
+Never work around a stop. See AGENTS.md and docs/production-deploy.md."""
 
 
 def blocks(command: str) -> bool:
