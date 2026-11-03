@@ -4,6 +4,8 @@ A native macOS menu bar app that cleans up messages before you send them. Select
 app, press a global hotkey (default ⌥⌘C), and a floating panel streams a rewritten version from
 the Anthropic API with word-level changes highlighted. ⌘↩ pastes it back over the selection.
 
+Production deploy rules are in `AGENTS.md`. Read them before any site deploy.
+
 Owner: Tommy Massaro (product designer / design engineer). He designs desktop-first and cares
 about polish; treat UI details as product decisions, not afterthoughts.
 
@@ -23,7 +25,8 @@ Codex and Claude work on this project in separate worktrees. Read `docs/agent-wo
 ```bash
 bash build.sh            # compile (release, arm64), bundle Tidy.app, sign, install to /Applications, launch
 bash release.sh 1.4 "- What changed"   # signed + notarized Tidy.zip, tag, GitHub release with those notes
-wrangler deploy          # publish site/ to tidy-app.tommymassaro.com (Cloudflare Worker, custom domain)
+python3 scripts/deploy-production.py --check  # inspect production before a deploy
+python3 scripts/deploy-production.py          # guarded production deploy, only after Tommy approves
 swift build              # compile only (fast check while iterating)
 tail -50 build.log       # build.sh writes all its output here
 log stream --predicate 'process == "Tidy"' --level debug   # runtime logs (NSLog)
@@ -201,6 +204,6 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - **Any change to the panel's UI or copy updates the site in the same change.** That covers layout,
   tokens, labels, placeholders, status lines and modes in `Panel.swift`, `PanelPages.swift`, `Theme.swift`
   and `Store.swift`. Update the demo's markup, styles and script and the sections that echo the app,
-  re-render `assets/hero-light.png` (the og:image), then `wrangler deploy`.
+  re-render `assets/hero-light.png` (the og:image), then use the guarded production command in `AGENTS.md` after Tommy approves.
 - With reduced motion (or no JavaScript) the demo shows its static finished frame, so the markup's
   default state must stay a complete, correct panel.
