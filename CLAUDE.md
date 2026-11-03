@@ -4,13 +4,14 @@ A native macOS menu bar app that cleans up messages before you send them. Select
 app, press a global hotkey (default ⌥⌘C), and a floating panel streams a rewritten version from
 the Anthropic API with word-level changes highlighted. ⌘↩ pastes it back over the selection.
 
+Production deploy rules are in `AGENTS.md`. Read them before any site deploy.
+
 Owner: Tommy Massaro (product designer / design engineer). He designs desktop-first and cares
 about polish; treat UI details as product decisions, not afterthoughts.
 
 **Read `docs/HANDOFF.md` first.** It has current status, the first tasks, and known risks.
 
-Codex and Claude work on this project in separate worktrees. Read `AGENTS.md` (the rules every agent follows,
-including how to deploy) and `docs/agent-workflow.md` before making changes.
+Codex and Claude work on this project in separate worktrees. Read `docs/agent-workflow.md` before making changes.
 
 ## Stack
 
@@ -24,8 +25,8 @@ including how to deploy) and `docs/agent-workflow.md` before making changes.
 ```bash
 bash build.sh            # compile (release, arm64), bundle Tidy.app, sign, install to /Applications, launch
 bash release.sh 1.4 "- What changed"   # signed + notarized Tidy.zip, tag, GitHub release with those notes
-scripts/deploy-site --check   # before any production deploy: is anything live missing here? (docs/deploying.md)
-scripts/deploy-site      # the only way to publish site/ to tidy-app.tommymassaro.com (never a raw wrangler deploy)
+python3 scripts/deploy-production.py --check  # inspect production before a deploy
+python3 scripts/deploy-production.py          # guarded production deploy, only after Tommy approves
 swift build              # compile only (fast check while iterating)
 tail -50 build.log       # build.sh writes all its output here
 log stream --predicate 'process == "Tidy"' --level debug   # runtime logs (NSLog)
@@ -40,9 +41,9 @@ Package.swift
 build.sh                     build + bundle + sign (Developer ID if present, else ad-hoc) + install
 release.sh                   version bump, notarize, tag, `gh release create` with Tidy.zip
 site/                        landing page (static HTML, Lens tokens) at tidy-app.tommymassaro.com
-wrangler.jsonc               static-assets Cloudflare Worker serving site/; `scripts/deploy-site` publishes it
-scripts/deploy-site          production deploy with the live-work check (+ scripts/tests, scripts/hooks)
-.claude/settings.json        hook that blocks a raw `wrangler deploy` and points to scripts/deploy-site
+wrangler.jsonc               static-assets Cloudflare Worker serving site/; `scripts/deploy-production.py` publishes it
+scripts/deploy-production.py guarded production deploy (docs/production-deploy.md, tests/)
+.claude/settings.json        hook (scripts/hooks/block-raw-deploy) that refuses a raw `wrangler deploy`
 Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tommymassaro.tidy
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
@@ -205,6 +206,6 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - **Any change to the panel's UI or copy updates the site in the same change.** That covers layout,
   tokens, labels, placeholders, status lines and modes in `Panel.swift`, `PanelPages.swift`, `Theme.swift`
   and `Store.swift`. Update the demo's markup, styles and script and the sections that echo the app,
-  re-render `assets/hero-light.png` (the og:image), then deploy with `scripts/deploy-site` when Tommy asks.
+  re-render `assets/hero-light.png` (the og:image), then use the guarded production command in `AGENTS.md` after Tommy approves.
 - With reduced motion (or no JavaScript) the demo shows its static finished frame, so the markup's
   default state must stay a complete, correct panel.

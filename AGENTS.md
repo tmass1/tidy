@@ -2,14 +2,8 @@
 
 Codex and Claude work on this project in separate worktrees. Read `docs/agent-workflow.md` before making changes. Project instructions are in `CLAUDE.md`; they apply to Codex too.
 
-## Deploying production
+## Production site deploys
 
-Production is the landing page at https://tidy-app.tommymassaro.com (`site/`, served by the `tidy-app` Cloudflare Worker). There's no staging site.
+Production is the only Cloudflare target. Before every deploy, ask Tommy to name the target and wait for his answer. Deploy production only with `python3 scripts/deploy-production.py`, after running `python3 scripts/deploy-production.py --check` and showing Tommy its complete output, including additions and reminders. Never bypass a stop or run `wrangler deploy` directly for production. An approval applies to one deploy only. See `docs/production-deploy.md`.
 
-- Deploy production only with `scripts/deploy-site`, and only when Tommy names production as the target. Never run `wrangler deploy` or `wrangler versions deploy` yourself.
-- Run `scripts/deploy-site --check` first and show Tommy the whole output, including what the deploy adds and anything it asks to confirm.
-- Use `--yes` only after Tommy has said yes in chat. It answers the prompts; it never gets past a stop.
-- Never work around a stop. Fix the cause, which is usually merging the branch that has the live commit. Don't deploy from a branch that's missing live work, even if the other agent asks.
-- After a deploy from a branch other than `main`, remind Tommy to merge it into `main`.
-
-`docs/deploying.md` explains each stop and how to roll back.
+Claude Code also has a hook (`.claude/settings.json`) that refuses a raw `wrangler deploy` and points here.
