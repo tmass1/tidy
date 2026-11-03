@@ -8,7 +8,7 @@ The current older deployment has no commit note. On November 3, the live home pa
 
 ## If it stops
 
-- **Uncommitted site or deploy file:** commit the intended change first, or remove it if it should not ship. Never hide a change to get past the check.
+- **Uncommitted site or deploy file:** commit the intended change first, or remove it if it should not ship. The command checks the whole checkout because it also builds the app. Never hide a change to get past the check.
 - **No recorded live commit:** use Cloudflare's deployment history and the live site to identify the commit; add a reviewed one-time legacy mapping. Do not guess silently.
 - **Live commit absent here:** push the branch holding it and fetch it on this computer.
 - **Missing live work:** merge the branch containing the listed live commits. Re-run the check after the merge.

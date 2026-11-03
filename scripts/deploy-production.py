@@ -91,10 +91,8 @@ def main():
     branch = git('branch', '--show-current'); head = git('rev-parse', 'HEAD')
     print(f'Folder: {ROOT}\nBranch: {branch}\nCommit: {head}')
     dirty = git('status', '--porcelain', '--untracked-files=all')
-    # Ignore only files unrelated to the Worker asset build. All tracked config/site changes count.
-    if dirty:
-        used = [x for x in dirty.splitlines() if x[3:].startswith(('site/', 'wrangler.jsonc', 'scripts/deploy-production.py', 'AGENTS.md', 'CLAUDE.md', 'docs/production-deploy.md'))]
-        if used: raise RuntimeError('Files used by the site or deploy check are not committed:\n' + '\n'.join(used))
+    if dirty: raise RuntimeError('Files in this checkout are not committed:\n' + dirty)
+    git('fetch', 'origin', '--prune')
     deployments = json.loads(run('wrangler', 'deployments', 'list', '--name', WORKER, '--json'))
     active = active_deployment(deployments)
     if len(active.get('versions', [])) != 1 or active['versions'][0]['percentage'] != 100:
