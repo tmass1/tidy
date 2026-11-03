@@ -48,16 +48,22 @@ def source_page_bytes(index_bytes):
     return re.sub(rb'<script type="module" src="https://static\.cloudflareinsights\.com/beacon\.min\.js/[^"]+"[^>]*></script>\n', b'', index_bytes)
 
 
-def live_commit(deployment, index_bytes):
+def live_commit(deployment, index_bytes, manual_commit=None):
     notes = deployment.get('annotations') or {}
     message = notes.get('workers/message', '')
     for word in message.split():
         if word.startswith('commit='):
+            if manual_commit is not None:
+                raise RuntimeError('--live cannot override a commit recorded by Cloudflare.')
             return word[7:], 'Cloudflare deploy note'
+    if manual_commit is not None:
+        if subprocess.run(['git', 'cat-file', '-e', f'{manual_commit}^{{commit}}'], cwd=ROOT, capture_output=True).returncode:
+            raise RuntimeError(f'--live commit {manual_commit} is absent from this checkout. Fetch the branch containing it first.')
+        return git('rev-parse', f'{manual_commit}^{{commit}}'), 'manually supplied with --live; verify against Cloudflare history'
     legacy = LEGACY.get(deployment['id'])
     if legacy and hashlib.sha256(source_page_bytes(index_bytes)).hexdigest() == legacy['index_sha256']:
         return legacy['commit'], 'legacy site match (commit attribution inferred)'
-    raise RuntimeError('Active deployment has no recorded commit and does not match the verified legacy page. Name the live commit by hand after checking Cloudflare history; do not deploy yet.')
+    raise RuntimeError('Active deployment has no recorded commit and does not match the verified legacy page. Check Cloudflare history, then provide --live <commit>; do not guess.')
 
 
 def lost_commits(live, head):
@@ -86,6 +92,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true', help='inspect production without build or deploy')
     parser.add_argument('--yes', action='store_true', help='nonterminal confirmation, only after Tommy approves in chat')
+    parser.add_argument('--live', metavar='COMMIT', help='manually identified live commit, only when Cloudflare has no commit note')
     args = parser.parse_args()
     if args.check and args.yes: parser.error('--yes is only for an approved deploy')
     branch = git('branch', '--show-current'); head = git('rev-parse', 'HEAD')
@@ -100,7 +107,7 @@ def main():
     print(f"Cloudflare deployment: {active['id']} ({active['created_on']})")
     status, index, _ = get(SITE + '/')
     if status != 200: raise RuntimeError(f'Live home page returned HTTP {status}')
-    live, provenance = live_commit(active, index)
+    live, provenance = live_commit(active, index, args.live)
     print(f'Live commit: {live} ({provenance})')
     added = lost_commits(live, head)
     print('This deploy adds:\n' + (added or '(no new commits)'))

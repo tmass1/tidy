@@ -16,6 +16,20 @@ class DeployCheckTests(unittest.TestCase):
         d = {'id': next(iter(deploy.LEGACY)), 'annotations': {'workers/message': 'commit=abc123 branch=main'}}
         self.assertEqual(deploy.live_commit(d, b'wrong')[0], 'abc123')
 
+    def test_manual_commit_cannot_override_cloudflare_note(self):
+        d = {'id': 'new', 'annotations': {'workers/message': 'commit=abc123 branch=main'}}
+        with self.assertRaisesRegex(RuntimeError, 'cannot override'):
+            deploy.live_commit(d, b'', '887e864')
+
+    def test_manual_commit_must_exist_locally(self):
+        with self.assertRaisesRegex(RuntimeError, 'absent from this checkout'):
+            deploy.live_commit({'id': 'new'}, b'', 'not-a-local-commit')
+
+    def test_manual_commit_is_resolved_to_full_hash(self):
+        commit, source = deploy.live_commit({'id': 'new'}, b'', '887e864')
+        self.assertEqual(commit, deploy.git('rev-parse', '887e864^{commit}'))
+        self.assertIn('manually supplied', source)
+
     def test_cloudflare_beacon_is_removed_from_source_comparison(self):
         page = b'<html>\n<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/abc" integrity="x"></script>\n</html>'
         self.assertEqual(deploy.source_page_bytes(page), b'<html>\n</html>')
