@@ -88,6 +88,16 @@ def verify_site():
         print(f'Hidden {path}: HTTP 404')
 
 
+def build_steps(root=ROOT):
+    # The tests are the Python ones in tests/. Tidy has no Swift test target, and `swift test` with
+    # none fails ("no tests found"), so it only runs once Package.swift declares one.
+    steps = [(sys.executable, '-m', 'unittest', 'discover', '-s', 'tests')]
+    if 'testTarget(' in (Path(root) / 'Package.swift').read_text():
+        steps.append(('swift', 'test'))
+    steps.append(('swift', 'build', '-c', 'release'))
+    return steps
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true', help='inspect production without build or deploy')
@@ -125,8 +135,8 @@ def main():
     if args.check: print('Check complete. No build or deploy ran.'); return
     if confirmations and not args.yes:
         if input('Confirm these reminders before continuing (yes): ').strip() != 'yes': raise RuntimeError('Deploy cancelled.')
-    run('swift', 'test')
-    run('swift', 'build', '-c', 'release')
+    for step in build_steps():
+        run(*step)
     print('Tests and production build passed.')
     if not args.yes:
         if input("Type deploy to publish production: ").strip() != 'deploy': raise RuntimeError('Deploy cancelled.')

@@ -1,4 +1,5 @@
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -42,6 +43,18 @@ class DeployCheckTests(unittest.TestCase):
         with patch.object(deploy, 'ROOT', Path(__file__).resolve().parents[1]):
             with self.assertRaisesRegex(RuntimeError, 'missing live work'):
                 deploy.lost_commits('ce3d4255f02dbe833f44c2b4c5b01e124cf706b7', '887e864')
+
+    def test_build_runs_the_python_tests_then_the_release_build(self):
+        steps = deploy.build_steps()
+        self.assertEqual(steps[0][1:], ('-m', 'unittest', 'discover', '-s', 'tests'))
+        self.assertEqual(steps[-1], ('swift', 'build', '-c', 'release'))
+        self.assertTrue((deploy.ROOT / 'tests' / Path(__file__).name).exists())
+
+    def test_swift_test_only_runs_when_the_package_has_swift_tests(self):
+        self.assertNotIn(('swift', 'test'), deploy.build_steps())
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / 'Package.swift').write_text('.testTarget(name: "TidyTests", dependencies: ["Tidy"])')
+            self.assertIn(('swift', 'test'), deploy.build_steps(tmp))
 
     def test_newer_branch_lists_additions(self):
         self.assertIn('Codex and Claude', deploy.lost_commits('ce3d4255f02dbe833f44c2b4c5b01e124cf706b7', 'f4764cc'))
