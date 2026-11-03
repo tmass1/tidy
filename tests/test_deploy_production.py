@@ -16,6 +16,10 @@ class DeployCheckTests(unittest.TestCase):
         d = {'id': next(iter(deploy.LEGACY)), 'annotations': {'workers/message': 'commit=abc123 branch=main'}}
         self.assertEqual(deploy.live_commit(d, b'wrong')[0], 'abc123')
 
+    def test_cloudflare_beacon_is_removed_from_source_comparison(self):
+        page = b'<html>\n<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/abc" integrity="x"></script>\n</html>'
+        self.assertEqual(deploy.source_page_bytes(page), b'<html>\n</html>')
+
     def test_unknown_legacy_content_stops(self):
         with self.assertRaisesRegex(RuntimeError, 'no recorded commit'):
             deploy.live_commit({'id': next(iter(deploy.LEGACY))}, b'wrong')

@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import urllib.error
@@ -41,6 +42,12 @@ def active_deployment(deployments):
     return max(deployments, key=lambda d: d['created_on'])
 
 
+def source_page_bytes(index_bytes):
+    # Cloudflare may inject its analytics beacon for some user agents. Remove only
+    # this exact kind of script before comparing against the checked-in HTML.
+    return re.sub(rb'<script type="module" src="https://static\.cloudflareinsights\.com/beacon\.min\.js/[^"]+"[^>]*></script>\n', b'', index_bytes)
+
+
 def live_commit(deployment, index_bytes):
     notes = deployment.get('annotations') or {}
     message = notes.get('workers/message', '')
@@ -48,7 +55,7 @@ def live_commit(deployment, index_bytes):
         if word.startswith('commit='):
             return word[7:], 'Cloudflare deploy note'
     legacy = LEGACY.get(deployment['id'])
-    if legacy and hashlib.sha256(index_bytes).hexdigest() == legacy['index_sha256']:
+    if legacy and hashlib.sha256(source_page_bytes(index_bytes)).hexdigest() == legacy['index_sha256']:
         return legacy['commit'], 'legacy site match (commit attribution inferred)'
     raise RuntimeError('Active deployment has no recorded commit and does not match the verified legacy page. Name the live commit by hand after checking Cloudflare history; do not deploy yet.')
 
