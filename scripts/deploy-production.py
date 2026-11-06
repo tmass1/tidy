@@ -6,6 +6,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -14,6 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKER = 'tidy-app'
 SITE = 'https://tidy-app.tommymassaro.com'
 RELEASE_BRANCH = 'main'
+# Cloudflare takes a little while to serve a new version everywhere, so the check after a deploy retries.
+POST_DEPLOY_WAIT = 90
+RETRY_EVERY = 5
 # Verified 2026-11-03: active Cloudflare deployment, exact live index bytes,
 # and site/index.html from ce3d425 match. Commit attribution is inferred.
 LEGACY = {'dc287bd2-f77f-481f-827b-02b291ea0d77': {'commit': 'ce3d4255f02dbe833f44c2b4c5b01e124cf706b7', 'index_sha256': '77e53701ada23a60e2782cdec2d2c7299a918ab833cb6a5ead1f55cb2c22721a'}}
@@ -83,17 +87,40 @@ def site_pages(commit):
     return ['/' + ('' if page == 'index' else page) for page in sorted(pages)]
 
 
-def verify_site(commit):
+def fetch_status(path):
+    try:
+        status, body, _ = get(SITE + path)
+    except OSError as e:
+        return f'no response ({e})', b''
+    return status, body
+
+
+def site_problems(commit):
+    # Every public and hidden URL at once. Returns (lines to print, what's wrong).
     public = [*site_pages(commit), '/assets/hero-light.png', '/signature/signature.js']
     hidden = ['/.git/config', '/wrangler.jsonc', '/AGENTS.md', '/CLAUDE.md', '/release.sh', '/Sources/', '/build/', '/docs/', '/__tidy_unknown_page__']
+    lines, problems = [], []
     for path in public:
-        status, body, _ = get(SITE + path)
-        if status != 200 or not body: raise RuntimeError(f'Public page or asset {path} failed: HTTP {status}')
-        print(f'Public {path}: HTTP {status}')
+        status, body = fetch_status(path)
+        if status != 200 or not body: problems.append(f'Public page or asset {path} failed: HTTP {status}')
+        else: lines.append(f'Public {path}: HTTP {status}')
     for path in hidden:
-        status, _, _ = get(SITE + path)
-        if status != 404: raise RuntimeError(f'Hidden or unknown path {path} returned HTTP {status}, expected 404')
-        print(f'Hidden {path}: HTTP 404')
+        status, _ = fetch_status(path)
+        if status != 404: problems.append(f'Hidden or unknown path {path} returned HTTP {status}, expected 404')
+        else: lines.append(f'Hidden {path}: HTTP 404')
+    return lines, problems
+
+
+def verify_site(commit, wait=0):
+    # Before a deploy wait is 0: what's live should already be right. After one it gives Cloudflare time.
+    deadline = time.monotonic() + wait
+    while True:
+        lines, problems = site_problems(commit)
+        if not problems or time.monotonic() >= deadline: break
+        print(f'Not live everywhere yet ({problems[0]}). Checking again in {RETRY_EVERY} seconds.')
+        time.sleep(RETRY_EVERY)
+    for line in lines: print(line)
+    if problems: raise RuntimeError('\n'.join(problems))
 
 
 def build_steps(root=ROOT):
@@ -152,7 +179,12 @@ def main():
         print('--yes used: requires Tommy’s explicit approval in this chat.')
     run('wrangler', 'deploy', '--name', WORKER, '--message', f'commit={head} branch={branch}')
     print('Deployment complete. Checking live site...')
-    verify_site(head)
+    try:
+        verify_site(head, wait=POST_DEPLOY_WAIT)
+    except RuntimeError as e:
+        raise RuntimeError(f'The deploy went out, but the live site still fails its check after {POST_DEPLOY_WAIT} seconds:\n{e}\n'
+                           f"Ask Tommy before rolling back: wrangler rollback {active['versions'][0]['version_id']} --name {WORKER}")
+    print('Live site check passed.')
 
 
 if __name__ == '__main__':
