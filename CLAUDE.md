@@ -185,8 +185,14 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 
 - `site/index.html` is **light only** (no dark-mode styles), except the footer (`.site-foot`), which uses the
   app's dark `Theme` colors scoped to itself and has the Tidy UI banner. Headlines use Newsreader, self-hosted in
-  `site/assets/fonts/` (OFL); everything else is the system font, like the app. The page makes no
-  third-party requests.
+  `site/assets/fonts/` (OFL); everything else is the system font, like the app.
+- `site/privacy.html`, `terms.html` and `setup.html` are the reading pages, served at `/privacy`, `/terms` and
+  `/setup`, modeled on Mark's. They share `assets/page.css` and `assets/page.js`. **They state facts about the app
+  and site, so keep them true:** a change to what the app sends or stores, its settings, its messages or the site's
+  analytics updates them and their "Last updated" date in the same change, along with the home page's "Every
+  connection Tidy makes" table.
+- Third-party requests: PostHog (`assets/analytics.js`, loaded by the home page and setup guide, cookie-free like
+  Mark's: `persistence: "memory"`) and the Web Analytics script Cloudflare adds to pages as it serves them.
 - Below everything is the shared **signature bar** (`<tommy-signature appearance="light" current-product="tidy">`,
   `site/signature/`), the same one as Tidy UI's site. Don't edit `signature.js`; copy in a new version of the
   whole folder when there is one. Its Inter is also declared in the page's own `@font-face`, because Chrome

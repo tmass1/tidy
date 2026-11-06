@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup guide: Tidy for Mac</title>
+<meta name="description" content="Install Tidy, add your Anthropic API key, allow Accessibility and clean up your first message. Plus what to do when something's not right.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f7f6fb">
+<link rel="icon" type="image/png" href="assets/favicon.png?v=2">
+<link rel="icon" type="image/svg+xml" href="assets/tidy-app-icon.svg?v=2">
+<link rel="canonical" href="https://tidy-app.tommymassaro.com/setup">
+<link rel="stylesheet" href="assets/page.css">
+<script src="assets/analytics.js"></script>
+</head>
+<body>
+
+<header class="bar">
+  <div class="top">
+    <a class="wordmark" href="./" aria-label="Tidy home"><img src="assets/tidy-app-wordmark.svg" width="67" height="37" alt="Tidy"></a>
+    <nav aria-label="Primary">
+      <a class="hide-small" href="setup" aria-current="page">Setup guide</a>
+      <a class="hide-small" href="privacy">Privacy</a>
+      <a class="hide-small" href="terms">Terms</a>
+      <a class="button" href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip" data-track-download="tidy" data-platform="macos">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main class="doc">
+  <h1>Setup guide</h1>
+  <p class="lede">Tidy walks you through all of this the first time it opens. It takes a few minutes, and you need an Apple Silicon Mac with macOS 14 Sonoma or later.</p>
+  <p class="date">Last updated 6 November 2026</p>
+
+  <h2 id="set-up">Set it up once</h2>
+  <ol class="steps">
+    <li>
+      <h3>Install Tidy</h3>
+      <p><a href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip" data-track-download="tidy" data-platform="macos">Download Tidy</a>, open the zip, move Tidy to your Applications folder and open it. Tidy lives in the menu bar, so it won’t appear in the Dock.</p>
+    </li>
+    <li>
+      <h3>Add your Anthropic API key</h3>
+      <p>Create a key at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a> and paste it into Tidy, which checks that it works. Using the API is billed by Anthropic and is separate from a Claude subscription, so your account needs API credits. The key stays in your Keychain.</p>
+    </li>
+    <li>
+      <h3>Allow Accessibility</h3>
+      <p>Tidy presses <kbd>⌘</kbd><kbd>C</kbd> to read what you selected and <kbd>⌘</kbd><kbd>V</kbd> to put the new version back, and macOS asks you to allow that once. Choose <strong>Open System Settings…</strong> and turn Tidy on. Tidy moves on by itself when it’s allowed.</p>
+    </li>
+    <li>
+      <h3>Check your shortcut</h3>
+      <p>The shortcut is <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd>. If you’d prefer a different one, record it here or later in Settings.</p>
+    </li>
+    <li>
+      <h3>Try it on a draft</h3>
+      <p>Tidy gives you a sample message that’s already selected. Press your shortcut and watch it clean up.</p>
+    </li>
+  </ol>
+  <p>To go through these steps again, open Settings from the menu bar icon and choose <strong>Run setup</strong> under General.</p>
+
+  <h2 id="use">Clean up a message</h2>
+  <ol>
+    <li>Select your draft in any app and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd>.</li>
+    <li>Read the new version. <strong>Changes</strong> shows what’s different, and holding <strong>Original</strong> shows your draft.</li>
+    <li>Pick a different mode or type a change in your own words, if you want one.</li>
+    <li>Press <kbd>⌘</kbd><kbd>↩</kbd> to put it back over your selection, or <kbd>Esc</kbd> to leave your draft alone.</li>
+  </ol>
+
+  <h2 id="help">If something’s not right</h2>
+  <h3>Nothing happens when you press the shortcut</h3>
+  <p>Another app may be using it. Open Settings, and under General, look for <strong>Another app already uses that shortcut</strong>. If it’s there, pick a different one.</p>
+
+  <h3>Tidy asks you to turn it on in System Settings</h3>
+  <p>Go to System Settings › Privacy &amp; Security › Accessibility and turn Tidy on. If it’s already on and Tidy still asks, turn it off and on again. You can paste text into the panel in the meantime.</p>
+
+  <h3>The panel opens empty</h3>
+  <p>Tidy didn’t find any selected text. Select your draft and try again, or paste it into the panel. When Tidy didn’t read your selection, the button pastes the result into your app instead of replacing the selection. Choosing <strong>Clean Up Clipboard</strong> from the menu bar icon works on what you’ve already copied.</p>
+
+  <h3>Your API key was rejected</h3>
+  <p>The key may be mistyped, or it may have been deleted. Create a new one at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a> and paste it into Settings (<kbd>⌘</kbd><kbd>,</kbd>).</p>
+
+  <h3>This API key doesn’t have access to that model, or Model not found</h3>
+  <p>Choose a different writing model in Settings, under General.</p>
+
+  <h3>Rate limited, or Claude is overloaded right now</h3>
+  <p>Wait a moment and press <kbd>⌘</kbd><kbd>R</kbd> to try again.</p>
+
+  <h3>A message about your credit balance</h3>
+  <p>Your Anthropic account needs more API credits. You can add them at <a href="https://console.anthropic.com">console.anthropic.com</a>. A Claude subscription doesn’t cover API use.</p>
+
+  <h3>Tidy copies or pastes the wrong thing on your keyboard</h3>
+  <p>Tidy presses the physical C and V keys, which can go wrong on keyboard layouts other than QWERTY. This is a known limitation.</p>
+
+  <h2 id="uninstall">Removing Tidy</h2>
+  <p>If you turned on <strong>Open Tidy at login</strong>, turn that off in Settings. Then choose <strong>Quit Tidy</strong> from the menu bar icon and drag Tidy from Applications to the Trash. In System Settings › Privacy &amp; Security › Accessibility, you can remove Tidy from the list too.</p>
+  <p>To also remove your history, modes, settings and API key from your Mac, paste this into Terminal and press Return:</p>
+  <pre><code>rm -rf ~/Library/Application\ Support/Tidy
+defaults delete com.tommymassaro.tidy
+security delete-generic-password -s com.tommymassaro.tidy</code></pre>
+  <p>This deletes them for good. Your key still works at Anthropic until you delete it at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a>.</p>
+
+  <h2 id="more">Still stuck</h2>
+  <p><a href="https://github.com/tmass1/tidy/issues">Report a problem</a> on GitHub, or write to <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a>.</p>
+</main>
+
+<footer class="site-foot">
+  <div class="foot-bottom">
+    <span>Tidy for Mac</span>
+    <span>© 2026 Tommy Massaro</span>
+    <span class="spacer"></span>
+    <a href="./">Home</a>
+    <a href="setup">Setup guide</a>
+    <a href="privacy">Privacy</a>
+    <a href="terms">Terms</a>
+    <a href="mailto:hey@tommymassaro.com">Contact</a>
+  </div>
+</footer>
+
+<tommy-signature appearance="light" current-product="tidy"></tommy-signature>
+<script type="module" src="signature/signature.js"></script>
+<script src="assets/page.js"></script>
+</body>
+</html>

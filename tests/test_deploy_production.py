@@ -56,6 +56,11 @@ class DeployCheckTests(unittest.TestCase):
             (Path(tmp) / 'Package.swift').write_text('.testTarget(name: "TidyTests", dependencies: ["Tidy"])')
             self.assertIn(('swift', 'test'), deploy.build_steps(tmp))
 
+    def test_site_pages_are_read_from_the_commit(self):
+        self.assertEqual(deploy.site_pages('ce3d4255f02dbe833f44c2b4c5b01e124cf706b7'), ['/'])
+        with patch.object(deploy, 'git', return_value='site/assets\nsite/index.html\nsite/privacy.html\nsite/terms.html'):
+            self.assertEqual(deploy.site_pages('any'), ['/', '/privacy', '/terms'])
+
     def test_newer_branch_lists_additions(self):
         self.assertIn('Codex and Claude', deploy.lost_commits('ce3d4255f02dbe833f44c2b4c5b01e124cf706b7', 'f4764cc'))
 

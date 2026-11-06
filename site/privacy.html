@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy: Tidy for Mac</title>
+<meta name="description" content="What Tidy does with your words. Your draft goes straight to Anthropic with your own key. There's no account and no Tidy server, and everything else stays on your Mac.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f7f6fb">
+<link rel="icon" type="image/png" href="assets/favicon.png?v=2">
+<link rel="icon" type="image/svg+xml" href="assets/tidy-app-icon.svg?v=2">
+<link rel="canonical" href="https://tidy-app.tommymassaro.com/privacy">
+<link rel="stylesheet" href="assets/page.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="top">
+    <a class="wordmark" href="./" aria-label="Tidy home"><img src="assets/tidy-app-wordmark.svg" width="67" height="37" alt="Tidy"></a>
+    <nav aria-label="Primary">
+      <a class="hide-small" href="setup">Setup guide</a>
+      <a class="hide-small" href="privacy" aria-current="page">Privacy</a>
+      <a class="hide-small" href="terms">Terms</a>
+      <a class="button" href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main class="doc">
+  <h1>Privacy</h1>
+  <p class="lede">Tidy reads the words you select, so here is exactly what happens to them.</p>
+  <p class="date">Last updated 6 November 2026</p>
+
+  <section class="short" aria-labelledby="short">
+    <h2 id="short">The short version</h2>
+    <ul>
+      <li>Your draft goes straight from your Mac to Anthropic, with your own API key, when you ask Tidy to clean it up.</li>
+      <li>There’s no Tidy account and no Tidy server, and the app has no analytics.</li>
+      <li>Your key, history, modes and writing style stay on your Mac.</li>
+      <li>The app checks GitHub for updates by itself.</li>
+      <li>This website counts visits, without cookies.</li>
+    </ul>
+  </section>
+
+  <h2>The app</h2>
+  <p><strong>Your API key.</strong> It’s stored in your macOS Keychain and only ever sent to Anthropic.</p>
+  <p><strong>Your selection.</strong> Tidy reads text only when you press its shortcut or choose a command from its menu. It presses <kbd>⌘</kbd><kbd>C</kbd> to copy your selection, then <kbd>⌘</kbd><kbd>V</kbd> to paste the new version when you press Replace. That’s what the Accessibility permission is for. Your clipboard is put back afterwards, unless you turn that off in Settings.</p>
+  <p><strong>Your history.</strong> The originals and results of your last 500 cleanups are saved on your Mac. You can clear them in Settings, under History.</p>
+  <p><strong>Your modes and writing style.</strong> They’re kept on your Mac, not in an account.</p>
+  <p><strong>Accounts and analytics.</strong> There are none. The app doesn’t track how you use it.</p>
+
+  <h2>When something leaves your Mac</h2>
+  <p>These are all the connections the app makes, all of them over HTTPS.</p>
+  <div class="table-card">
+    <table>
+      <thead><tr><th scope="col">Where</th><th scope="col">What’s sent</th><th scope="col">When</th></tr></thead>
+      <tbody>
+        <tr><td>api.anthropic.com</td><td>Your draft, the mode or change you asked for, your writing style if it’s on, any character limit, and your key</td><td>When you ask for a cleanup or a change</td></tr>
+        <tr><td>api.anthropic.com</td><td>Recent drafts, your edits, and any samples you paste, with your key</td><td>Only if you turn on Learn my writing style or use Learn from these</td></tr>
+        <tr><td>api.anthropic.com</td><td>Your key, to check that it works</td><td>When you add it</td></tr>
+        <tr><td>api.github.com</td><td>A check for a new version</td><td>Shortly after Tidy opens, then once a day</td></tr>
+        <tr><td>github.com</td><td>A request for the new version</td><td>When you choose to update, or by itself if you’ve turned on automatic installs</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Anthropic.</strong> You use Tidy under your own Anthropic account, so what you send is handled under Anthropic’s <a href="https://www.anthropic.com/legal/commercial-terms">commercial terms</a> and <a href="https://www.anthropic.com/legal/privacy">privacy policy</a>. Tidy can’t see or change what Anthropic keeps. If a draft is too private to send, don’t run Tidy on it.</p>
+  <p><strong>Update checks.</strong> Like any web request, these show GitHub your IP address. Tidy doesn’t have a setting to turn the check off.</p>
+
+  <h2>This website</h2>
+  <p><strong>Visit counts.</strong> The home page and setup guide use PostHog to count page views and clicks on Download. It runs without cookies and doesn’t build a profile of you. This page and the terms don’t load it. To stop being counted in your browser, visit the home page with <code>?analytics=off</code> added to its address. That choice is kept in one small cookie, set only because you asked, and it also covers Tommy Massaro’s other sites at tommymassaro.com.</p>
+  <p><strong>Hosting.</strong> Cloudflare hosts the site and handles your IP address in order to deliver its pages. It also adds its own Web Analytics script to pages, which counts visits without cookies.</p>
+  <p><strong>Fonts.</strong> The site’s typefaces are served from this site, so no font company sees your visit.</p>
+
+  <h2>Selling and sharing</h2>
+  <p>Your data isn’t sold, and it isn’t shared for advertising.</p>
+
+  <h2>Your rights</h2>
+  <p>Depending on where you live, you may have the right to see, correct or delete data held about you, or to object to how it’s used. Tidy keeps nothing about you on a server of its own, so in practice this covers the website’s visit counts. What you send to Anthropic is covered by your account with them. Write to <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a> and you’ll get help with it.</p>
+
+  <h2>Changes and contact</h2>
+  <p>If any of this changes, this page will say so and show a new date. Tidy is made by Tommy Massaro. Questions are welcome at <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a>.</p>
+</main>
+
+<footer class="site-foot">
+  <div class="foot-bottom">
+    <span>Tidy for Mac</span>
+    <span>© 2026 Tommy Massaro</span>
+    <span class="spacer"></span>
+    <a href="./">Home</a>
+    <a href="setup">Setup guide</a>
+    <a href="privacy">Privacy</a>
+    <a href="terms">Terms</a>
+    <a href="mailto:hey@tommymassaro.com">Contact</a>
+  </div>
+</footer>
+
+<tommy-signature appearance="light" current-product="tidy"></tommy-signature>
+<script type="module" src="signature/signature.js"></script>
+<script src="assets/page.js"></script>
+</body>
+</html>

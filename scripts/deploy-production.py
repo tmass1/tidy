@@ -75,8 +75,16 @@ def lost_commits(live, head):
     return git('log', '--oneline', f'{live}..{head}')
 
 
-def verify_site():
-    public = ['/', '/assets/hero-light.png', '/signature/signature.js']
+def site_pages(commit):
+    # The pages in site/ at a commit, as URLs. Before a deploy this is what's live, so a page that's
+    # being added doesn't stop its own deploy; after it, the commit just deployed.
+    names = git('ls-tree', '--name-only', commit, 'site/').splitlines()
+    pages = [name[len('site/'):-len('.html')] for name in names if name.endswith('.html')]
+    return ['/' + ('' if page == 'index' else page) for page in sorted(pages)]
+
+
+def verify_site(commit):
+    public = [*site_pages(commit), '/assets/hero-light.png', '/signature/signature.js']
     hidden = ['/.git/config', '/wrangler.jsonc', '/AGENTS.md', '/CLAUDE.md', '/release.sh', '/Sources/', '/build/', '/docs/', '/__tidy_unknown_page__']
     for path in public:
         status, body, _ = get(SITE + path)
@@ -129,7 +137,7 @@ def main():
     if subprocess.run(['git', 'merge-base', '--is-ancestor', origin_main, head], cwd=ROOT).returncode:
         confirmations.append('remote main has commits this branch lacks')
     for item in confirmations: print('Reminder: confirm ' + item)
-    verify_site()
+    verify_site(live)
     print('Rollback: wrangler rollback ' + active['versions'][0]['version_id'] + ' --name ' + WORKER)
     print('After deploy: write release notes; merge a side branch into main; push only when Tommy says so.')
     if args.check: print('Check complete. No build or deploy ran.'); return
@@ -144,7 +152,7 @@ def main():
         print('--yes used: requires Tommy’s explicit approval in this chat.')
     run('wrangler', 'deploy', '--name', WORKER, '--message', f'commit={head} branch={branch}')
     print('Deployment complete. Checking live site...')
-    verify_site()
+    verify_site(head)
 
 
 if __name__ == '__main__':

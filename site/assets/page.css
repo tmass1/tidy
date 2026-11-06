@@ -1,0 +1,146 @@
+/* The site's reading pages: privacy, terms and the setup guide. Same tokens and parts as index.html
+   (the app's Lens palette, Sources/Tidy/Theme.swift, light), in a single column for long text. */
+@font-face {
+  font-family: "Newsreader"; font-style: normal; font-weight: 300 700; font-display: swap;
+  src: url(fonts/newsreader.woff2) format("woff2");
+}
+/* The signature bar's Inter and its place at the end of the page: see the note in index.html. */
+@font-face {
+  font-family: SignatureInter; font-weight: 100 900; font-display: swap;
+  src: url(../signature/assets/inter.woff2) format("woff2");
+}
+tommy-signature { transform: translateZ(0); }
+
+:root {
+  color-scheme: light;
+  --page: #f7f6fb;
+  --white: #ffffff;
+  --ink: #292832;
+  --body: #4f4c5a;
+  --muted: #74717f;
+  --rule: #aca2bd38;
+  --layer: #ecebf4;
+  --accent: #6350c5;
+  --accent-ink: #4b3ba6;
+  --accent-soft: #eee9ff;
+  --action: #292832;
+  --on-action: #ffffff;
+  --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --card-shadow: 0 1px 2px #2720360f, 0 12px 32px -16px #2720362e;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; font-feature-settings: "kern";
+}
+a { color: inherit; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+img { display: block; max-width: 100%; height: auto; }
+p, li { text-wrap: pretty; }
+kbd {
+  font: inherit; font-size: 0.82em; display: inline-block; min-width: 1.9em; padding: 1px 7px;
+  border: 1px solid #aca2bd59; border-bottom-width: 2px; border-radius: 7px;
+  background: var(--white); text-align: center; line-height: 1.6; white-space: nowrap; color: var(--ink);
+}
+
+/* Top bar */
+.bar { position: sticky; top: 0; z-index: 50; padding: 12px 20px 0; }
+.top {
+  display: flex; align-items: center; gap: 30px; max-width: 1120px; margin: 0 auto; padding: 10px 10px 10px 20px;
+  border-radius: 18px; border: 1px solid transparent;
+  transition: background-color .25s, border-color .25s, box-shadow .25s, -webkit-backdrop-filter .25s, backdrop-filter .25s;
+}
+.bar.scrolled .top {
+  background: #fcfcffb8; border-color: #ffffffcc;
+  -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: 0 0 0 1px #aca2bd2e, 0 12px 32px -16px #27203647;
+}
+.wordmark { display: inline-flex; align-items: center; flex: none; text-decoration: none; }
+.wordmark img { width: 67px; height: 37px; }
+.top nav { margin-left: auto; display: flex; align-items: center; gap: 28px; font-size: 14px; }
+.top nav a:not(.button) { color: var(--body); text-decoration: none; }
+.top nav a:not(.button):hover, .top nav a[aria-current] { color: var(--ink); }
+.top nav a[aria-current] { font-weight: 550; }
+.button {
+  display: inline-flex; align-items: center; background: var(--action); color: var(--on-action);
+  text-decoration: none; font-weight: 550; font-size: 13px; letter-spacing: -0.15px;
+  border-radius: 9px; padding: 8px 13px;
+  box-shadow: 0 1px 1px #27203626, 0 6px 16px -6px #27203666;
+  transition: transform .15s, box-shadow .15s;
+}
+.button:hover { transform: translateY(-1px); box-shadow: 0 1px 1px #27203626, 0 10px 22px -8px #27203680; }
+
+/* The reading column */
+.doc { max-width: 720px; margin: 0 auto; padding: 72px 24px 112px; }
+.doc h1, .doc h2 { font-family: var(--serif); font-weight: 420; font-optical-sizing: auto; text-wrap: balance; color: var(--ink); }
+.doc h1 { font-size: 64px; line-height: 1; letter-spacing: -0.028em; margin: 0 0 20px; }
+.doc h2 { font-size: 32px; line-height: 1.12; letter-spacing: -0.02em; margin: 56px 0 14px; scroll-margin-top: 84px; }
+.doc h3 { font-size: 17px; line-height: 1.35; font-weight: 600; letter-spacing: -0.012em; margin: 28px 0 6px; scroll-margin-top: 84px; }
+.doc p, .doc ul, .doc ol { color: var(--body); margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 22px; }
+.doc li { margin-bottom: 6px; }
+.doc strong { color: var(--ink); font-weight: 600; }
+.doc a:not(.button) { color: var(--accent-ink); text-decoration: underline; text-decoration-color: #4b3ba64d; text-underline-offset: 3px; }
+.doc a:not(.button):hover { text-decoration-color: currentColor; }
+.lede { font-size: 20px; line-height: 1.55; color: var(--body); margin: 0 0 12px; }
+.date { font-size: 14px; color: var(--muted); margin: 0 0 36px; }
+
+/* The short version */
+.short { padding: 24px 28px 14px; margin: 0 0 8px; border-radius: 16px; background: var(--white); box-shadow: 0 0 0 1px var(--rule), var(--card-shadow); }
+.doc .short h2 { font-family: var(--sans); font-size: 14px; font-weight: 600; line-height: 1.4; letter-spacing: -0.005em; color: var(--accent); margin: 0 0 12px; }
+
+/* The connections table on the privacy page */
+.table-card { margin: 18px 0 22px; border-radius: 14px; overflow: hidden; background: var(--white); box-shadow: 0 0 0 1px var(--rule), var(--card-shadow); }
+.doc table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.45; }
+.doc th { padding: 10px 16px; font-size: 12px; font-weight: 500; color: var(--muted); text-align: left; background: #f0edf780; }
+.doc td { padding: 12px 16px; border-top: 1px solid var(--rule); color: var(--body); vertical-align: top; }
+.doc td:first-child { color: var(--ink); font-weight: 550; white-space: nowrap; }
+
+/* Setup guide */
+.steps { list-style: none; padding: 0; margin: 20px 0 0; counter-reset: step; }
+.doc .steps > li { position: relative; padding: 0 0 26px 48px; margin: 0; counter-increment: step; }
+.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft);
+}
+.doc .steps h3 { margin: 2px 0 6px; }
+.doc .steps p:last-child { margin-bottom: 0; }
+.doc pre {
+  margin: 0 0 14px; padding: 14px 16px; overflow-x: auto; border-radius: 12px; background: var(--white);
+  box-shadow: 0 0 0 1px var(--rule); font: 13px/1.6 var(--mono); color: var(--ink);
+}
+.doc code { font-family: var(--mono); font-size: 0.88em; }
+.doc .message { display: block; margin: 0 0 4px; color: var(--ink); font-weight: 600; letter-spacing: -0.012em; }
+
+/* Footer: the app's dark palette, as on the home page, without the banner. */
+.site-foot { --ink: #f0eef7; --muted: #b6b1c4; --rule: #b9aaca25; --accent: #bcabff; color: var(--muted); background: #16141c; border-radius: 32px 32px 0 0; }
+.site-foot a { color: inherit; text-decoration: none; }
+.site-foot a:focus-visible { outline-color: var(--accent); }
+.foot-bottom { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; max-width: 1160px; margin: 0 auto; padding: 30px 40px; font-size: 13px; }
+.foot-bottom .spacer { flex: 1; }
+.foot-bottom a:hover { color: var(--ink); }
+
+@media (max-width: 720px) {
+  .top { gap: 16px; }
+  .top nav { gap: 16px; }
+  .top nav .hide-small { display: none; }
+  .doc { padding: 44px 20px 80px; }
+  .doc h1 { font-size: 46px; }
+  .doc h2 { font-size: 28px; margin-top: 44px; }
+  .lede { font-size: 18px; }
+  .short { padding: 20px 20px 10px; }
+  .doc thead { display: none; }
+  .doc tr { display: block; padding: 12px 16px; border-top: 1px solid var(--rule); }
+  .doc tbody tr:first-child { border-top: 0; }
+  .doc td { display: block; padding: 0; border: 0; }
+  .doc td:first-child { white-space: normal; margin-bottom: 2px; }
+  .doc td + td { margin-top: 2px; }
+  .site-foot { border-radius: 24px 24px 0 0; }
+  .foot-bottom { gap: 12px 20px; padding: 26px 20px; }
+  .foot-bottom .spacer { flex-basis: 100%; height: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
