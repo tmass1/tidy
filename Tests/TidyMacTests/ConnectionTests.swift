@@ -5,7 +5,7 @@ import TidyCore
 final class ConnectionTests: XCTestCase {
     @MainActor func testValidConnectionSavesTrimmedKeyAndClearsDraft() async {
         var written: String?
-        let model = KeyConnectionModel(check: { _ in .valid }, save: { written = $0 })
+        let model = KeyConnectionModel(check: { _, _ in .valid }, save: { key, _ in written = key })
         model.draft = "  test-key  "
         await model.connect()
         XCTAssertEqual(written, "test-key")
@@ -16,7 +16,7 @@ final class ConnectionTests: XCTestCase {
     @MainActor func testRejectedAndOfflineNeverSave() async {
         for outcome in [Claude.KeyCheck.rejected("Invalid key"), .unreachable("Offline")] {
             var writes = 0
-            let model = KeyConnectionModel(check: { _ in outcome }, save: { _ in writes += 1 })
+            let model = KeyConnectionModel(check: { _, _ in outcome }, save: { _, _ in writes += 1 })
             model.draft = "candidate"
             await model.connect()
             XCTAssertEqual(writes, 0)
@@ -26,7 +26,7 @@ final class ConnectionTests: XCTestCase {
         }
     }
     @MainActor func testPersistenceFailureDoesNotShowSuccess() async {
-        let model = KeyConnectionModel(check: { _ in .valid }, save: { _ in throw ClaudeError(message: "Keychain locked") })
+        let model = KeyConnectionModel(check: { _, _ in .valid }, save: { _, _ in throw ClaudeError(message: "Keychain locked") })
         model.draft = "candidate"
         await model.connect()
         XCTAssertFalse(model.saved)
@@ -36,7 +36,7 @@ final class ConnectionTests: XCTestCase {
     @MainActor func testCancelIgnoresLateValidation() async {
         var resume: CheckedContinuation<Claude.KeyCheck, Never>?
         var writes = 0
-        let model = KeyConnectionModel(check: { _ in await withCheckedContinuation { resume = $0 } }, save: { _ in writes += 1 })
+        let model = KeyConnectionModel(check: { _, _ in await withCheckedContinuation { resume = $0 } }, save: { _, _ in writes += 1 })
         model.draft = "candidate"
         let pending = Task { await model.connect() }
         while resume == nil { await Task.yield() }

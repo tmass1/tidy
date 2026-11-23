@@ -22,10 +22,10 @@ import TidyCore
         domain = "TidyDesignPreview.\(UUID())"
         folder = FileManager.default.temporaryDirectory.appendingPathComponent(domain)
         let store = Store(defaults: UserDefaults(suiteName: domain)!, folder: folder,
-                          readKey: { arguments.contains("--disconnected") ? nil : "recorded-preview-placeholder" },
-                          writeKey: { _ in }, checkKey: { _ in .valid },
+                          readKey: { _ in arguments.contains("--disconnected") ? nil : "recorded-preview-placeholder" },
+                          writeKey: { _, _ in }, checkKey: { _, _ in .valid },
                           accessibilityAllowed: { true }, registersHotKey: false, isDesignPreview: true)
-        controller = PanelController(store: store, transport: { _, _, _, _ in
+        controller = PanelController(store: store, transport: { _, _, _, _, _ in
             AsyncThrowingStream { stream in
                 stream.yield("Hey, can you look over the deck before tomorrow? Slide 4 is confusing, and the numbers on slide 7 don’t match the Q3 report.")
                 stream.finish()

@@ -2,7 +2,7 @@ import TidyCore
 import AppKit
 import SwiftUI
 
-// Setup stays in the panel: connection, selection access, shortcut, then an optional live sample.
+// Setup stays in the panel: choosing an AI and its key, selection access, shortcut, then an optional live sample.
 // Success waits for Continue. General › More options › Review setup opens it again.
 // Esc steps back, then closes; the existing global shortcut still advances practice.
 
@@ -71,9 +71,9 @@ private struct KeyStep: View {
 
     var body: some View {
         SetupLayout(symbol: store.hasAPIKey ? "checkmark.circle" : "key",
-                    title: store.hasAPIKey ? "Your key is saved." : "Connect Tidy.",
-                    detail: store.hasAPIKey ? "Your connection is set up. Next, choose whether Tidy can read selected text and paste back a rewrite." : "Use your Anthropic API key, just like on iPhone. No new Tidy account needed.") {
-            KeyConnectionEditor(store: store)
+                    title: store.hasAPIKey ? "Your key is saved." : "Choose your AI.",
+                    detail: store.hasAPIKey ? "Your connection is set up. Next, choose whether Tidy can read selected text and paste back a rewrite." : "Tidy rewrites with a key from your own account. No new Tidy account needed. Tidy uses one AI at a time, and you can switch later in Settings.") {
+            KeyConnectionEditor(store: store, showsTitle: false)
         } footer: {
             Spacer(minLength: 0)
             LensButton(title: "Continue to Accessibility", prominent: true) { model.setupStep = .access }
@@ -206,7 +206,7 @@ private struct TryStep: View {
                 : "Choose Start writing, then paste a draft into Tidy. \(readiness.detail)"
         ) {
             VStack(alignment: .leading, spacing: 12) {
-                Text(store.isDesignPreview ? "Sample draft · recorded preview" : "Sample draft · uses your Anthropic API key")
+                Text(store.isDesignPreview ? "Sample draft · recorded preview" : "Sample draft · uses your \(store.provider.keyName)")
                     .font(.system(size: 12)).foregroundStyle(Color(Theme.accent)).lineBox(12)
                 Text(sample)
                 .font(.system(size: 17))
@@ -218,7 +218,7 @@ private struct TryStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color(Theme.well)))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(Theme.wellBorder), lineWidth: 1))
-                Text(store.isDesignPreview ? "This design preview makes no API requests." : "This is a live rewrite. API usage is billed to your Anthropic account.")
+                Text(store.isDesignPreview ? "This design preview makes no API requests." : "This is a live rewrite. API usage is billed to your \(store.provider.company) account.")
                     .font(.system(size: 12)).foregroundStyle(Color(Theme.muted)).lineBox(12)
             }
         } footer: {

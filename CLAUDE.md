@@ -2,7 +2,8 @@
 
 A native macOS menu bar app that cleans up messages before you send them. Select text in any
 app, press a global hotkey (default ⌥⌘C), and a floating panel streams a rewritten version from
-the Anthropic API with word-level changes highlighted. ⌘↩ pastes it back over the selection.
+the AI you chose (Claude, ChatGPT, Gemini or Grok, with your own API key) with word-level changes
+highlighted. ⌘↩ pastes it back over the selection.
 
 Production deploy rules are in `AGENTS.md`. Read them before any site deploy.
 
@@ -18,7 +19,7 @@ Codex and Claude work on this project in separate worktrees. Read `docs/agent-wo
 - Mac Swift Package: executable plus shared `TidyCore` library; iOS Xcode project in `iOS/`; **no third-party runtime dependencies**
 - AppKit shell (status item, NSPanel, Carbon hotkey) + SwiftUI views hosted inside it
 - macOS 14+ (Apple Silicon); `swift-tools-version:5.9`, so it compiles in **Swift 5 language mode**
-- Anthropic Messages API over `URLSession.bytes` with SSE streaming; API key in the login Keychain
+- One AI at a time over `URLSession.bytes` with SSE streaming (`AI.stream` in `TidyCore/Providers.swift`); its API key in the login Keychain
 
 ## Commands
 
@@ -83,7 +84,8 @@ Sources/Tidy/
 
 | What | Where |
 | --- | --- |
-| API key | Keychain, service `com.tommymassaro.tidy`, account `anthropic-api-key` |
+| API key (one, for the AI in use) | Keychain, service `com.tommymassaro.tidy`, account `anthropic-api-key`, `openai-api-key`, `gemini-api-key` or `grok-api-key` |
+| provider (the AI in use; absent means Claude) | `UserDefaults` (`com.tommymassaro.tidy`) |
 | model, shortcut, voiceProfile, useVoice, learnFromEdits, restoreClipboard, voiceUpdatedAt, charLimits, setupDone | `UserDefaults` (`com.tommymassaro.tidy`) |
 | autoInstallUpdates, skippedUpdateVersion | `UserDefaults`, owned by `Updater` |
 | modes, history (max 500) | JSON in `~/Library/Application Support/Tidy/` |
@@ -110,8 +112,34 @@ and replaces `voiceProfile` with bullet points. It runs on demand (Settings › 
 - Use AppKit colors (`NSColor.labelColor`, `.systemRed.withAlphaComponent`) in attributed strings
   so they adapt to light/dark mode automatically.
 - Copy in the UI is plain and direct. No exclamation marks, no "Oops".
-- Model IDs live only in `Claude.models`. Check current IDs at https://docs.claude.com before
-  changing them.
+- Model IDs live only in `Claude.models` (Claude) and `AIProvider.models` (the others, in
+  `TidyCore/Providers.swift`). Check current IDs before changing them: https://docs.claude.com,
+  developers.openai.com/api/docs/models, ai.google.dev/gemini-api/docs/models, docs.x.ai/developers/models.
+
+## AI providers (Mac)
+
+Tidy writes with **one AI at a time**: Claude, ChatGPT, Gemini or Grok (`AIProvider`), each with the
+user's own API key. Tommy chose one over several to keep it simple.
+
+- `Store.provider` is the AI in use. `Store.connect(_:key:)` is the only way it changes: it saves the new key,
+  switches, resets the model to that AI's default, then removes the old AI's key from the Keychain. If the
+  new key can't be saved, nothing changes. Someone updating has no saved provider, which means Claude, and
+  their key and model carry over.
+- "Your AI" in Settings › General and setup's first step are the same view, `KeyConnectionEditor`: the AI in
+  use with **Change**, which opens the list of four and a key field. A key is checked (`AI.checkKey`, a free
+  models request) before it's saved, so a rejected key never replaces a working AI.
+- The model menu lists only the AI in use's models. Text goes only to that AI; there's no fallback to another.
+- Wire formats (`AI.request`, `TextStreamDecoder`): ChatGPT and Grok use the Responses API with `store: false`
+  (both keep responses 30 days otherwise); Gemini uses its OpenAI-compatible chat completions endpoint. The
+  decoder accepts both Responses events and chat-completions chunks. Each model gets the lowest thinking
+  setting it accepts (`AIProvider.effort`), so rewrites stay quick. Claude still goes through `Claude.stream`.
+- Gemini's free tier lets Google use the text and have people review it, and its terms require the paid tier
+  for apps offered in the EEA, UK and Switzerland. Tidy can't tell a free key from a paid one, so the notice
+  shows for every Gemini key.
+- The UI says "Grok", never a company name: xAI's own docs mix "xAI" and "SpaceXSI".
+- The iPhone app still uses Claude only (`Claude` and `RewriteSession` in TidyCore are unchanged).
+- **Not yet tested with real ChatGPT, Gemini or Grok keys.** The request shapes are unit-tested against the
+  companies' docs, some of which were incomplete (Grok's streaming events, Gemini's output limit).
 
 ## Gotchas
 
@@ -158,7 +186,7 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - **Setup** is a third page (`PanelModel.page == .setup`, step in `setupStep`), opened on first launch while
   `Store.setupDone` is false and from General › More options › Review setup. Four named steps:
   Connection, Selection access, Shortcut, Start writing. Connection and General reuse `KeyConnectionEditor`;
-  keys are validated with `GET /v1/models`, then saved with checked Keychain update/add operations.
+  keys are validated with a free models request to the chosen AI, then saved with checked Keychain update/add operations.
   Success remains visible until Continue. Accessibility polls its current state but waits for Continue.
   The last step offers Start writing (closes setup) or Rewrite sample (a clearly labeled live API call).
   While setup is open, the hotkey still advances the shortcut step and runs the sample on the final step.
@@ -226,7 +254,7 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 
 `iOS/TidyMobile.xcodeproj` contains the SwiftUI companion and a text Share extension. Its targets
 use the same `TidyCore` library as the Mac executable. `Sources/TidyCore` owns `Models.swift`,
-`Prompts.swift`, `Claude.swift`, `WordDiff.swift`, `Strings.swift`, plus the mobile rewrite lifecycle,
+`Prompts.swift`, `Claude.swift`, `Providers.swift` (the Mac's other AIs), `WordDiff.swift`, `Strings.swift`, plus the mobile rewrite lifecycle,
 strict stream parser and validated mode-file transfer. The extraction retains Mac storage contracts; desktop setup refinements are documented in `docs/mac/SETUP-AUDIT.md`.
 
 Read `iOS/README.md`, `docs/ios/AUDIT.md`, and `docs/ios/VERIFICATION.md` before extending mobile.

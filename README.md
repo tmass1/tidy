@@ -1,7 +1,7 @@
 # Tidy
 
 Clean up any message before you send it. Select text in any app, press **⌥⌘C**, and a panel
-streams a cleaned-up version from Claude with the changes highlighted. **⌘↩** puts it back
+streams a cleaned-up version from the AI you chose (Claude, ChatGPT, Gemini or Grok) with the changes highlighted. **⌘↩** puts it back
 in place of your selection.
 
 **Download:** https://tidy-app.tommymassaro.com (macOS 14+, Apple Silicon). Tidy updates itself from
@@ -12,7 +12,7 @@ the [latest release](https://github.com/tmass1/tidy/releases/latest).
 1. Install Apple's command line tools if you don't have them: `xcode-select --install`
 2. In this folder: `bash build.sh`
    It compiles, installs to /Applications, and opens Tidy (the ✨ wand in your menu bar).
-3. In setup or Settings, connect your Anthropic API key. Tidy checks it before saving; the saved state has a **Change key** action. Create a key at https://console.anthropic.com/settings/keys
+3. In setup or Settings, choose your AI (Claude, ChatGPT, Gemini or Grok) and connect its API key. Tidy uses one AI at a time and checks the key before saving; **Change** switches to another. Setup links to where each key is created.
 4. Allow Tidy under System Settings › Privacy & Security › Accessibility.
 
 With a Developer ID certificate in your keychain, `build.sh` signs with it and the Accessibility

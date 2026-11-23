@@ -279,7 +279,7 @@ final class PanelModel: ObservableObject {
     @Published var original = ""
     @Published var result = ""
     @Published var isStreaming = false
-    /// The text Claude is working from: shown ghosted until the first words arrive.
+    /// The text the AI is working from: shown ghosted until the first words arrive.
     @Published private(set) var reading = ""
     @Published var error: String?
     @Published var modeID: UUID?
@@ -312,7 +312,7 @@ final class PanelModel: ObservableObject {
     @Published private(set) var isTrial = false
     private var task: Task<Void, Never>?
     let store: Store
-    typealias Transport = (String, String, String, String) -> AsyncThrowingStream<String, Error>
+    typealias Transport = (AIProvider, String, String, String, String) -> AsyncThrowingStream<String, Error>
     private let transport: Transport
 
     var onClose: (@MainActor () -> Void)?
@@ -320,8 +320,8 @@ final class PanelModel: ObservableObject {
     var onReplace: (@MainActor (String) -> Void)?
     var onHeight: (@MainActor (CGFloat) -> Void)?
 
-    init(store: Store, transport: @escaping Transport = { key, model, system, user in
-        Claude.stream(apiKey: key, model: model, system: system, user: user)
+    init(store: Store, transport: @escaping Transport = { provider, key, model, system, user in
+        AI.stream(provider: provider, apiKey: key, model: model, system: system, user: user)
     }) { self.store = store; self.transport = transport }
 
     var currentMode: Mode? { store.modes.first { $0.id == modeID } ?? store.modes.first }
@@ -522,7 +522,7 @@ final class PanelModel: ObservableObject {
     private func start(base: String, instruction: String, step: StepKind) {
         guard !base.trimmed.isEmpty else { return }
         guard let key = store.apiKey else {
-            error = "Add your Anthropic API key in Settings (⌘,)."
+            error = "Add your \(store.provider.keyName) in Settings (⌘,)."
             return
         }
         cancelRun()
@@ -537,7 +537,8 @@ final class PanelModel: ObservableObject {
         let system = Prompts.system(voice: store.useVoice ? store.voiceProfile : nil)
         let user = Prompts.user(text: base, instruction: instruction, app: sourceName, limit: limit)
         let model = store.model
-        let stream = transport(key, model, system, user)
+        let provider = store.provider
+        let stream = transport(provider, key, model, system, user)
 
         task = Task { [weak self] in
             var text = ""
@@ -554,7 +555,7 @@ final class PanelModel: ObservableObject {
                 self.result = finished
                 self.isStreaming = false
                 if finished.isEmpty {
-                    self.error = "Claude returned an empty response. Press ⌘R to try again."
+                    self.error = "\(provider.name) returned an empty response. Press ⌘R to try again."
                 } else {
                     self.record(step, finished)
                     if self.isTrial {
@@ -762,7 +763,7 @@ struct PanelView: View {
                 .frame(height: height)
                 .accessibilityLabel("Your draft")
             } else if model.isStreaming && model.result.isEmpty {
-                // Reading: the text Claude is working from, ghosted, with a light passing over it.
+                // Reading: the text the AI is working from, ghosted, with a light passing over it.
                 ShimmerText(
                     text: Text(model.reading).font(.system(size: Theme.prose.size)).tracking(Theme.prose.kern),
                     base: Color(Theme.muted).opacity(0.6)
@@ -1018,7 +1019,7 @@ private struct PanelHeightKey: PreferenceKey {
 
 // MARK: - Small components
 
-/// Text with a soft lavender light passing over it, for while Claude is working.
+/// Text with a soft lavender light passing over it, for while the AI is working.
 /// Holds still with Reduce Motion.
 struct ShimmerText: View {
     let text: Text

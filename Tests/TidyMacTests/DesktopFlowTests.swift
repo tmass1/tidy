@@ -4,16 +4,16 @@ import AppKit
 import TidyCore
 
 final class DesktopFlowTests: XCTestCase {
-    @MainActor private func store(write: @escaping (String?) throws -> Void = { _ in }) -> Store {
+    @MainActor private func store(write: @escaping (String?, AIProvider) throws -> Void = { _, _ in }) -> Store {
         let id = "TidyTests.\(UUID())"
         let defaults = UserDefaults(suiteName: id)!
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(id)
         addTeardownBlock { defaults.removePersistentDomain(forName: id); try? FileManager.default.removeItem(at: folder) }
-        return Store(defaults: defaults, folder: folder, readKey: { "existing-test-key" }, writeKey: write,
+        return Store(defaults: defaults, folder: folder, readKey: { _ in "existing-test-key" }, writeKey: write,
                      accessibilityAllowed: { true }, registersHotKey: false)
     }
     @MainActor func testFailedReplacementPreservesCachedCredential() throws {
-        let store = store { _ in throw ClaudeError(message: "Storage unavailable") }
+        let store = store { _, _ in throw ClaudeError(message: "Storage unavailable") }
         XCTAssertThrowsError(try store.setAPIKey("replacement"))
         XCTAssertTrue(store.hasAPIKey)
         XCTAssertEqual(store.apiKey, "existing-test-key")
@@ -23,7 +23,7 @@ final class DesktopFlowTests: XCTestCase {
         let defaults = UserDefaults(suiteName: id)!
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(id)
         defer { defaults.removePersistentDomain(forName: id); try? FileManager.default.removeItem(at: folder) }
-        let store = Store(defaults: defaults, folder: folder, readKey: { nil }, writeKey: { _ in },
+        let store = Store(defaults: defaults, folder: folder, readKey: { _ in nil }, writeKey: { _, _ in },
                           registersHotKey: false, isDesignPreview: true)
         do { try await store.learnVoice(samples: "Example text"); XCTFail("Preview must block voice learning") }
         catch { XCTAssertEqual(error.localizedDescription, "Voice learning is unavailable in the design preview.") }
@@ -35,8 +35,8 @@ final class DesktopFlowTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: id); try? FileManager.default.removeItem(at: folder) }
         var resume: CheckedContinuation<Claude.KeyCheck, Never>?
         var writes = 0
-        let store = Store(defaults: defaults, folder: folder, readKey: { nil }, writeKey: { _ in writes += 1 },
-                          checkKey: { _ in await withCheckedContinuation { resume = $0 } }, registersHotKey: false)
+        let store = Store(defaults: defaults, folder: folder, readKey: { _ in nil }, writeKey: { _, _ in writes += 1 },
+                          checkKey: { _, _ in await withCheckedContinuation { resume = $0 } }, registersHotKey: false)
         let controller = PanelController(store: store)
         store.connection.draft = "test-candidate"
         let pending = Task { await store.connection.connect() }
@@ -80,7 +80,7 @@ final class DesktopFlowTests: XCTestCase {
         XCTAssertTrue(model.replaceTitle.hasPrefix("Replace"))
     }
     @MainActor func testSampleKeepsLabelAfterCompletionAndExitClearsIt() async {
-        let model = PanelModel(store: store(), transport: { _, _, _, _ in
+        let model = PanelModel(store: store(), transport: { _, _, _, _, _ in
             AsyncThrowingStream { $0.yield("A cleaned sample."); $0.finish() }
         })
         model.tryOnSample()
@@ -95,7 +95,7 @@ final class DesktopFlowTests: XCTestCase {
     }
     @MainActor func testExitingSampleCancelsLateOutput() async {
         var stream: AsyncThrowingStream<String, Error>.Continuation?
-        let model = PanelModel(store: store(), transport: { _, _, _, _ in
+        let model = PanelModel(store: store(), transport: { _, _, _, _, _ in
             AsyncThrowingStream { stream = $0 }
         })
         model.tryOnSample()

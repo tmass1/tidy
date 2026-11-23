@@ -264,7 +264,7 @@ struct ModesTab: View {
                 .padding(.top, 10)
             Caption(text: "Name").padding(.top, 14)
             LensField(placeholder: "Name", text: mode.name)
-            Caption(text: "What Claude should do")
+            Caption(text: "What Tidy should do")
                 .padding(.top, 22)
                 .padding(.bottom, 7)
             TextEditor(text: mode.instruction)
@@ -514,7 +514,7 @@ struct HistoryTab: View {
             Caption(text: "\(HistoryText.caption(for: item)) · \(item.mode)")
                 .padding(.top, 14)
             block("Sent", item.sent, size: 17)
-            if item.edited { block("Claude suggested", item.suggestion, size: 14) }
+            if item.edited { block("Tidy suggested", item.suggestion, size: 14) }
             block("Your draft", item.original, size: 14)
         }
     }

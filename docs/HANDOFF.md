@@ -18,9 +18,9 @@ Hammerspoon script (`~/.hammerspoon/cleanup.lua`). He wanted something better be
 | Topic | Decision |
 | --- | --- |
 | Form | Native macOS menu bar app, Swift, no Dock icon |
-| Engine | Anthropic API key, streaming (not the CLI, no Ollama for now) |
+| Engine | One AI at a time with the user's own API key, streaming: Claude, ChatGPT, Gemini or Grok on the Mac (not the CLI, no Ollama for now) |
 | Default hotkey | ⌥⌘C, changeable in Settings |
-| Default model | Sonnet 5.5 (`claude-sonnet-5-5`); Haiku 5.5 and Opus 5.5 selectable |
+| Default model | Claude: Sonnet 5.5 (`claude-sonnet-5-5`); Haiku 5.5 and Opus 5.5 selectable. Each other AI defaults to its balanced model (see `AIProvider.defaultModel`) |
 | Features | Streaming + inline word diff, custom modes, searchable history, learns his writing voice |
 
 Defaults chosen during implementation, all open to change:
@@ -32,6 +32,14 @@ Defaults chosen during implementation, all open to change:
 ## Current status
 
 _Updated October 26, 2026._
+
+- **More AIs (branch `claude/ai-providers`, November 23, 2026, not merged or released).** The Mac app can
+  write with ChatGPT, Gemini or Grok as well as Claude, one at a time (see CLAUDE.md, "AI providers"). The
+  branch includes Codex's `codex/ios-companion`, so merging it to `main` also brings the iPhone app and
+  Codex's Mac setup changes. Still to do before release: test with a real key for each new AI; measure the
+  "fastest / balanced / most careful" labels on the new models; update the site (home page, `/privacy`,
+  `/terms`, `/setup`), which still says Tidy uses Anthropic only; have Gemini's terms reviewed; decide whether
+  the iPhone app gets the same choice.
 
 - **Public** at https://github.com/tmass1/tidy. Landing page in `site/`, deployed to
   https://tidy-app.tommymassaro.com by a static-assets Cloudflare Worker (`wrangler.jsonc`), like
@@ -82,7 +90,7 @@ _Updated October 26, 2026._
    - `@ViewBuilder` bodies with `let` declarations (`ModesTab`, `VoiceTab`)
 2. **Make the core loop work end to end** (QA checklist below), in Mail, Messages, Slack, Chrome
    (Gmail) and Notes. This is the part that failed with Hammerspoon, so it matters most.
-3. **Check the model IDs** in `Claude.models` against https://docs.claude.com.
+3. **Check the model IDs** in `Claude.models` and `AIProvider.models` against each company's current list (links in CLAUDE.md, Conventions).
 4. **Add a test target** for the pure-Swift logic (`WordDiff`, `Prompts.clean`, `Shortcut.display`,
    `HistoryItem.edited`) if XCTest or Swift Testing is available with the command line tools.
 5. Commit and push to `tmass1/tidy`, with a `.gitignore` for `.build/`, `build/`, `build.log`, `.DS_Store`, `.swiftpm/`.

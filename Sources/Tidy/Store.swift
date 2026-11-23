@@ -5,13 +5,22 @@ import ServiceManagement
 
 enum Keychain {
     private static let service = "com.tommymassaro.tidy"
-    private static let account = "anthropic-api-key"
 
-    static func read() -> String? {
+    /// One Keychain item per AI. Claude's keeps its original name, so keys saved before carry over.
+    private static func account(_ provider: AIProvider) -> String {
+        switch provider {
+        case .claude: "anthropic-api-key"
+        case .chatgpt: "openai-api-key"
+        case .gemini: "gemini-api-key"
+        case .grok: "grok-api-key"
+        }
+    }
+
+    static func read(_ provider: AIProvider) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: account(provider),
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -21,11 +30,11 @@ enum Keychain {
         return String(data: data, encoding: .utf8)
     }
 
-    static func write(_ value: String?) throws {
+    static func write(_ value: String?, _ provider: AIProvider) throws {
         let base: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: account(provider),
         ]
         guard let value, !value.isEmpty else {
             let status = SecItemDelete(base as CFDictionary)
@@ -50,6 +59,8 @@ final class Store: ObservableObject {
 
     @Published var modes: [Mode] { didSet { save(modes, to: "modes.json") } }
     @Published var history: [HistoryItem] { didSet { save(history, to: "history.json") } }
+    /// The AI in use. Tidy uses one at a time; `connect` switches it.
+    @Published private(set) var provider: AIProvider { didSet { defaults.set(provider.rawValue, forKey: "provider") } }
     @Published var model: String { didSet { defaults.set(model, forKey: "model") } }
     @Published var shortcut: Shortcut {
         didSet {
@@ -78,20 +89,20 @@ final class Store: ObservableObject {
     private var isLearning = false
 
     private let defaults: UserDefaults
-    private let writeKey: (String?) throws -> Void
+    private let writeKey: (String?, AIProvider) throws -> Void
     private let registersHotKey: Bool
-    let checkKey: (String) async -> Claude.KeyCheck
+    let checkKey: (String, AIProvider) async -> Claude.KeyCheck
     let accessibilityAllowed: () -> Bool
     let isDesignPreview: Bool
-    lazy var connection = KeyConnectionModel(check: checkKey, save: { [weak self] value in
+    lazy var connection = KeyConnectionModel(provider: provider, check: checkKey, save: { [weak self] value, provider in
         guard let self else { throw ClaudeError(message: "Tidy is no longer available.") }
-        try self.setAPIKey(value)
+        try self.connect(provider, key: value)
     })
 
     init(defaults: UserDefaults = .standard, folder: URL? = nil,
-         readKey: () -> String? = Keychain.read,
-         writeKey: @escaping (String?) throws -> Void = Keychain.write,
-         checkKey: @escaping (String) async -> Claude.KeyCheck = Claude.checkKey,
+         readKey: (AIProvider) -> String? = Keychain.read,
+         writeKey: @escaping (String?, AIProvider) throws -> Void = Keychain.write,
+         checkKey: @escaping (String, AIProvider) async -> Claude.KeyCheck = AI.checkKey,
          accessibilityAllowed: @escaping () -> Bool = { Selection.isTrusted(prompt: false) },
          registersHotKey: Bool = true, isDesignPreview: Bool = false) {
         self.defaults = defaults; self.writeKey = writeKey; self.checkKey = checkKey
@@ -104,7 +115,10 @@ final class Store: ObservableObject {
 
         modes = Store.load([Mode].self, from: base.appendingPathComponent("modes.json")) ?? Mode.defaults
         history = Store.load([HistoryItem].self, from: base.appendingPathComponent("history.json")) ?? []
-        model = defaults.string(forKey: "model") ?? "claude-sonnet-5-5"
+        // No saved choice means a version from before there was one, which only had Claude.
+        let provider = defaults.string(forKey: "provider").flatMap { AIProvider(rawValue: $0) } ?? .claude
+        self.provider = provider
+        model = provider.model(orDefault: defaults.string(forKey: "model"))
         shortcut = defaults.data(forKey: "shortcut")
             .flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) } ?? .defaultCleanup
         voiceProfile = defaults.string(forKey: "voiceProfile") ?? ""
@@ -115,7 +129,7 @@ final class Store: ObservableObject {
         charLimits = defaults.dictionary(forKey: "charLimits") as? [String: Int] ?? [:]
         setupDone = defaults.bool(forKey: "setupDone")
 
-        let key = readKey()
+        let key = readKey(provider)
         cachedKey = key
         hasAPIKey = !(key ?? "").isEmpty
     }
@@ -127,11 +141,23 @@ final class Store: ObservableObject {
         return cachedKey
     }
 
-    func setAPIKey(_ value: String) throws {
+    /// Replaces the key of the AI in use.
+    func setAPIKey(_ value: String) throws { try connect(provider, key: value) }
+
+    /// Saves a key and makes its AI the one in use. Only one key is kept: switching removes the
+    /// old AI's key from the Keychain. If the new key can't be saved, nothing changes.
+    func connect(_ provider: AIProvider, key value: String) throws {
         let key = value.trimmed
-        try writeKey(key)
+        try writeKey(key, provider)
+        let previous = self.provider
         cachedKey = key
         hasAPIKey = !key.isEmpty
+        guard provider != previous else { return }
+        self.provider = provider
+        model = provider.defaultModel
+        do { try writeKey(nil, previous) } catch {
+            NSLog("Tidy: couldn't remove the old \(previous.keyName): \(error.localizedDescription)")
+        }
     }
 
     // MARK: Hotkey & login
@@ -190,11 +216,11 @@ final class Store: ObservableObject {
             samples: samples
         )
         var out = ""
-        for try await chunk in Claude.stream(apiKey: key, model: model, system: Prompts.voiceSystem, user: prompt, maxTokens: 1500) {
+        for try await chunk in AI.stream(provider: provider, apiKey: key, model: model, system: Prompts.voiceSystem, user: prompt, maxTokens: 1500) {
             out += chunk
         }
         let profile = out.trimmed
-        guard !profile.isEmpty else { throw ClaudeError(message: "Claude returned an empty profile. Try again.") }
+        guard !profile.isEmpty else { throw ClaudeError(message: "\(provider.name) returned an empty profile. Try again.") }
         voiceProfile = profile
         voiceUpdatedAt = Date()
     }

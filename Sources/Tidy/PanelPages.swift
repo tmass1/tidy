@@ -115,13 +115,13 @@ struct HistoryRow: View {
     }
 }
 
-/// The model choice: a quiet menu showing "Sonnet 5.5", with the full names inside.
+/// The model choice: a quiet menu showing "Sonnet 5.5", with the full names of your AI's models inside.
 struct ModelMenu: View {
     @ObservedObject var store: Store
 
     var body: some View {
         Menu {
-            ForEach(Claude.models) { option in
+            ForEach(store.provider.models) { option in
                 Button {
                     store.model = option.id
                 } label: {
@@ -133,7 +133,7 @@ struct ModelMenu: View {
                 }
             }
         } label: {
-            Text(Self.label(for: store.model))
+            Text(Self.label(for: store.model, in: store.provider))
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
@@ -143,8 +143,8 @@ struct ModelMenu: View {
     }
 
     /// "Sonnet 5.5 · balanced" → "Sonnet 5.5"
-    static func label(for id: String) -> String {
-        let name = Claude.models.first { $0.id == id }?.name ?? id
+    static func label(for id: String, in provider: AIProvider) -> String {
+        let name = provider.models.first { $0.id == id }?.name ?? id
         return name.components(separatedBy: " · ").first ?? name
     }
 }

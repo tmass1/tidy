@@ -53,8 +53,9 @@ class DeployCheckTests(unittest.TestCase):
         self.assertTrue((deploy.ROOT / 'tests' / Path(__file__).name).exists())
 
     def test_swift_test_only_runs_when_the_package_has_swift_tests(self):
-        self.assertNotIn(('swift', 'test'), deploy.build_steps())
         with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / 'Package.swift').write_text('.executableTarget(name: "Tidy")')
+            self.assertNotIn(('swift', 'test'), deploy.build_steps(tmp))
             (Path(tmp) / 'Package.swift').write_text('.testTarget(name: "TidyTests", dependencies: ["Tidy"])')
             self.assertIn(('swift', 'test'), deploy.build_steps(tmp))
 
