@@ -293,17 +293,6 @@ struct Rule: View {
     }
 }
 
-/// The lower-case "tidy" wordmark: 21 pt, weight 650, tracking −1.
-struct Wordmark: View {
-    var body: some View {
-        Text("tidy")
-            .font(Font(NSFont.systemFont(ofSize: 21, weight: Theme.brandWeight) as CTFont))
-            .tracking(-1)
-            .lineBox(21)
-            .accessibilityLabel("Tidy")
-    }
-}
-
 /// Muted 11 pt label above a field or block, like the design's detail labels.
 struct Caption: View {
     let text: String

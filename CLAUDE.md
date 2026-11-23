@@ -57,6 +57,7 @@ Sources/Tidy/
   Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling, fit-to-content height),
                              PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
   PanelPages.swift           The panel's tabbed Settings page + shared Lens parts (SettingRow, LensField, LensButton…)
+  Wordmark.swift             The title bar's logo: the landing page's wordmark, drawn from the SVG's own path data
   SettingsView.swift         The Settings tabs: General, Modes, Voice, History (+ ShortcutRecorder, UpdatesRow)
   SetupView.swift            First-launch setup steps in the panel: key (checked), Accessibility, shortcut, practice run
   Store.swift                Mac Keychain and Store (Mode/HistoryItem now in TidyCore/Models.swift)
@@ -175,6 +176,9 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
 - The text is an NSTextView (`ProseView`), not TextEditor, so line height, tracking and the diff's
   rounded highlights (`HighlightLayoutManager`) match the design.
 - Reduce Transparency swaps the glass for an opaque surface.
+- The title bar's logo (`Wordmark`, 54 × 30 pt) is the landing page's wordmark, not text: `Wordmark.swift` holds
+  the same outlines as `site/assets/tidy-app-wordmark.svg`, in `Theme.ink` with the dot in `Theme.brandDot`. A test
+  fails if the two drift apart, so a new logo means updating both (and the `-dark` SVG) together.
 - **All settings live in the panel**, on one Settings page with tabs: General, Modes, Voice, History
   (`PanelModel.page == .settings`, tab in `Store.settingsTab`). There is no separate Settings window.
   The sliders icon opens General, the clock icon opens History, and either toggles back to the text.

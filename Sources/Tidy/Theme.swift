@@ -13,6 +13,7 @@ enum Theme {
     static let soft = dynamic("#f0edf780", "#302b3c80") // command bar
     static let accent = dynamic("#6350c5", "#bcabff")
     static let accentSoft = dynamic("#eee9ff", "#393047")
+    static let brandDot = dynamic("#b6aad3", "#b6aad3") // the dot on the wordmark's i, the same in both modes
     static let action = dynamic("#292832", "#eeebf6")
     static let onAction = dynamic("#ffffff", "#282432")
     static let green = dynamic("#286248", "#a3d8b9")
