@@ -1,3 +1,4 @@
+import TidyCore
 import AppKit
 import Carbon
 import SwiftUI
@@ -21,9 +22,9 @@ final class PanelController {
     private var keyMonitor: Any?
     private var clickMonitor: Any?
 
-    init(store: Store) {
+    init(store: Store, transport: PanelModel.Transport? = nil) {
         self.store = store
-        self.model = PanelModel(store: store)
+        self.model = transport.map { PanelModel(store: store, transport: $0) } ?? PanelModel(store: store)
         model.onClose = { [weak self] in self?.close() }
         model.onCopy = { [weak self] text in self?.copy(text) }
         model.onReplace = { [weak self] text in self?.replace(text) }
@@ -46,6 +47,8 @@ final class PanelController {
     }
 
     func close() {
+        store.isRecordingShortcut = false
+        store.connection.cancel()
         model.cancelRun()
         model.holdingOriginal = false
         removeKeyMonitor()
@@ -179,6 +182,8 @@ final class PanelController {
 
     private func handleKey(_ event: NSEvent) -> Bool {
         guard let panel, event.window === panel else { return false }
+        // The recorder owns keys, including Esc, until it finishes or cancels.
+        guard !store.isRecordingShortcut else { return false }
         let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
         let key = (event.charactersIgnoringModifiers ?? "").lowercased()
 
@@ -304,16 +309,20 @@ final class PanelModel: ObservableObject {
     private(set) var sourceApp: NSRunningApplication?
     private(set) var hadSelection = false
     /// The practice run at the end of setup: when it finishes, the status line says what's next.
-    private var isTrial = false
+    @Published private(set) var isTrial = false
     private var task: Task<Void, Never>?
     let store: Store
+    typealias Transport = (String, String, String, String) -> AsyncThrowingStream<String, Error>
+    private let transport: Transport
 
     var onClose: (@MainActor () -> Void)?
     var onCopy: (@MainActor (String) -> Void)?
     var onReplace: (@MainActor (String) -> Void)?
     var onHeight: (@MainActor (CGFloat) -> Void)?
 
-    init(store: Store) { self.store = store }
+    init(store: Store, transport: @escaping Transport = { key, model, system, user in
+        Claude.stream(apiKey: key, model: model, system: system, user: user)
+    }) { self.store = store; self.transport = transport }
 
     var currentMode: Mode? { store.modes.first { $0.id == modeID } ?? store.modes.first }
     var sourceName: String? { sourceApp?.localizedName }
@@ -455,6 +464,10 @@ final class PanelModel: ObservableObject {
         run()
     }
 
+    func exitSample() {
+        reset(original: "", source: nil, hadSelection: false)
+    }
+
     /// Ends setup without the practice run.
     func skipSetup() {
         store.setupDone = true
@@ -524,13 +537,14 @@ final class PanelModel: ObservableObject {
         let system = Prompts.system(voice: store.useVoice ? store.voiceProfile : nil)
         let user = Prompts.user(text: base, instruction: instruction, app: sourceName, limit: limit)
         let model = store.model
+        let stream = transport(key, model, system, user)
 
         task = Task { [weak self] in
             var text = ""
             do {
-                for try await chunk in Claude.stream(apiKey: key, model: model, system: system, user: user) {
+                for try await chunk in stream {
                     text += chunk
-                    guard let self else { return }
+                    guard let self, !Task.isCancelled else { return }
                     self.result = Prompts.clean(text, streaming: true)
                     self.arrivals.append(Styled.Arrival(end: (self.result as NSString).length, time: Date()))
                 }
@@ -544,8 +558,12 @@ final class PanelModel: ObservableObject {
                 } else {
                     self.record(step, finished)
                     if self.isTrial {
-                        self.isTrial = false
-                        self.showNotice("That’s it. Select text in any app and press \(self.store.shortcut.display).", seconds: 10)
+                        let readiness = SetupReadiness(hasKey: self.store.hasAPIKey,
+                                                       hasAccess: self.store.accessibilityAllowed(),
+                                                       hasShortcut: self.store.hotKeyRegistered)
+                        self.showNotice(readiness == .ready
+                            ? "Sample complete. Press Esc, then select your text and use \(self.store.shortcut.display)."
+                            : "Sample complete. Exit sample to paste your own draft.", seconds: 10)
                     }
                 }
             } catch {
@@ -588,6 +606,14 @@ struct PanelView: View {
             titlebar
             switch model.page {
             case .editor:
+                if model.isTrial {
+                    HStack(spacing: 12) {
+                        Text(store.isDesignPreview ? "Sample draft · recorded preview" : "Sample draft · live API rewrite")
+                            .font(.system(size: 12)).foregroundStyle(Color(Theme.accent))
+                        Spacer()
+                        SmallButton(title: "Exit sample") { model.exitSample() }
+                    }.padding(.horizontal, 31).padding(.bottom, 12)
+                }
                 editorHeader
                 content
                 modes
@@ -619,6 +645,9 @@ struct PanelView: View {
     private var titlebar: some View {
         HStack(spacing: 14) {
             Wordmark()
+            if store.isDesignPreview {
+                Text("Design preview · no API requests").font(.system(size: 11)).foregroundStyle(Color(Theme.muted))
+            }
             if let name = model.sourceName {
                 HStack(spacing: 6) {
                     Image(systemName: Self.symbol(for: model.sourceApp?.bundleIdentifier))
@@ -700,7 +729,7 @@ struct PanelView: View {
     // The text: your draft before a result exists, then the result (streaming, Final or Changes).
 
     private var content: some View {
-        let height = min(max(textHeight, Self.minTextHeight), model.maxTextHeight)
+        let height = min(max(textHeight, Self.minTextHeight), model.maxTextHeight - (model.isTrial ? 44 : 0))
         return Group {
             if model.holdingOriginal {
                 // Never shorter than the result it covers, so the controls below don't jump.

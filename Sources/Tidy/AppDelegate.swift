@@ -1,3 +1,4 @@
+import TidyCore
 import AppKit
 import SwiftUI
 
@@ -126,6 +127,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             UpdateWindow.shared.show(release, activate: true)
             return
         }
+        store.moreOptionsExpanded = true
         showSettings(.general)
         Task { await Updater.shared.check() }
     }

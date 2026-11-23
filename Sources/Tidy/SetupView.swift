@@ -1,12 +1,21 @@
+import TidyCore
 import AppKit
 import SwiftUI
 
-// Setup, as a page in the panel: the API key (checked with Anthropic), Accessibility (moves on by
-// itself once it's allowed), the shortcut, then a practice cleanup of a sample draft. First launch
-// opens it; Settings › General › Run setup opens it again. Esc steps back, then closes.
+// Setup stays in the panel: connection, selection access, shortcut, then an optional live sample.
+// Success waits for Continue. General › More options › Review setup opens it again.
+// Esc steps back, then closes; the existing global shortcut still advances practice.
 
 enum SetupStep: Int, CaseIterable {
     case key, access, shortcut, tryIt
+    var title: String {
+        switch self {
+        case .key: return "Connection"
+        case .access: return "Selection access"
+        case .shortcut: return "Shortcut"
+        case .tryIt: return "Start writing"
+        }
+    }
 
     /// The practice draft on the last step.
     static let sample = "hey can u look over the deck before tmrw, i think slide 4 is confusing and the numbers on 7 dont match the q3 report"
@@ -23,7 +32,7 @@ struct SetupPage: View {
             Group {
                 switch model.setupStep {
                 case .key: KeyStep(model: model, store: store)
-                case .access: AccessStep(model: model)
+                case .access: AccessStep(model: model, store: store)
                 case .shortcut: ShortcutStep(model: model, store: store)
                 case .tryIt: TryStep(model: model, store: store)
                 }
@@ -39,7 +48,7 @@ struct SetupPage: View {
     /// "Setup · 2 of 4" and four short bars, lavender up to the current step.
     private var progress: some View {
         HStack(spacing: 12) {
-            Caption(text: "Setup · \(model.setupStep.rawValue + 1) of \(SetupStep.allCases.count)")
+            Caption(text: "\(model.setupStep.title) · \(model.setupStep.rawValue + 1) of \(SetupStep.allCases.count)")
             Spacer(minLength: 0)
             HStack(spacing: 5) {
                 ForEach(SetupStep.allCases, id: \.self) { step in
@@ -59,86 +68,28 @@ struct SetupPage: View {
 private struct KeyStep: View {
     @ObservedObject var model: PanelModel
     @ObservedObject var store: Store
-    @State private var draft = ""
-    @State private var checking = false
-    @State private var result: Claude.KeyCheck?
 
     var body: some View {
-        SetupLayout(
-            symbol: "key",
-            title: "Add your Anthropic API key",
-            detail: "Tidy sends your draft straight to Anthropic with your own key, so you pay only for what you use. The key stays in your Keychain. There’s no account and no Tidy server."
-        ) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .center, spacing: 12) {
-                    LensField(
-                        placeholder: store.hasAPIKey ? "Paste a different key" : "sk-ant-…",
-                        text: $draft, secure: true, autofocus: !store.hasAPIKey
-                    )
-                    .onSubmit(check)
-                    LensButton(title: "Check key", prominent: !store.hasAPIKey, action: check)
-                        .disabled(draft.trimmed.isEmpty || checking)
-                }
-                status
-                Link("Get a key at console.anthropic.com", destination: URL(string: "https://console.anthropic.com/settings/keys")!)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(Theme.accent))
-            }
+        SetupLayout(symbol: store.hasAPIKey ? "checkmark.circle" : "key",
+                    title: store.hasAPIKey ? "Your key is saved." : "Connect Tidy.",
+                    detail: store.hasAPIKey ? "Your connection is set up. Next, choose whether Tidy can read selected text and paste back a rewrite." : "Use your Anthropic API key, just like on iPhone. No new Tidy account needed.") {
+            KeyConnectionEditor(store: store)
         } footer: {
             Spacer(minLength: 0)
-            LensButton(title: "Continue", prominent: store.hasAPIKey) { model.setupStep = .access }
-                .disabled(!store.hasAPIKey || checking)
-        }
-    }
-
-    @ViewBuilder private var status: some View {
-        if checking {
-            ShimmerText(text: Text("Checking with Anthropic…").font(.system(size: 12)), base: Color(Theme.muted))
-                .lineBox(12)
-        } else {
-            switch result {
-            case .valid:
-                StatusDot(text: "That key works. It’s saved in your Keychain.")
-            case .rejected(let message):
-                StatusDot(text: message, isError: true)
-            case .unreachable(let message):
-                HStack(spacing: 10) {
-                    StatusDot(text: "Couldn’t check it: \(message)", isError: true)
-                    SmallButton(title: "Save anyway") {
-                        store.setAPIKey(draft)
-                        draft = ""
-                        result = nil
-                    }
-                }
-            case nil:
-                if store.hasAPIKey {
-                    StatusDot(text: "A key is already saved in your Keychain.")
-                }
-            }
-        }
-    }
-
-    private func check() {
-        let key = draft.trimmed
-        guard !key.isEmpty, !checking else { return }
-        checking = true
-        Task { @MainActor in
-            let outcome = await Claude.checkKey(key)
-            checking = false
-            result = outcome
-            guard outcome == .valid else { return }
-            store.setAPIKey(key)
-            draft = ""
-            // A good key moves on by itself after a beat.
-            try? await Task.sleep(nanoseconds: 900_000_000)
-            if model.page == .setup, model.setupStep == .key { model.setupStep = .access }
+            LensButton(title: "Continue to Accessibility", prominent: true) { model.setupStep = .access }
+                .disabled(!store.hasAPIKey)
         }
     }
 }
 
 private struct AccessStep: View {
     @ObservedObject var model: PanelModel
-    @State private var trusted = Selection.isTrusted(prompt: false)
+    @ObservedObject var store: Store
+    @State private var trusted: Bool
+    init(model: PanelModel, store: Store) {
+        self.model = model; self.store = store
+        _trusted = State(initialValue: store.accessibilityAllowed())
+    }
     @State private var asked = false
 
     var body: some View {
@@ -154,7 +105,7 @@ private struct AccessStep: View {
                     VStack(alignment: .leading, spacing: 8) {
                         instruction(1, "Open System Settings")
                         instruction(2, "Turn on Tidy under Privacy & Security › Accessibility")
-                        instruction(3, "Come back here. Setup moves on by itself.")
+                        instruction(3, "Come back to Tidy and choose Continue.")
                     }
                     HStack(spacing: 14) {
                         LensButton(title: "Open System Settings…", prominent: true, action: open)
@@ -176,13 +127,7 @@ private struct AccessStep: View {
             }
         }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
-            let now = Selection.isTrusted(prompt: false)
-            guard now, !trusted else { return }
-            trusted = true
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                if model.page == .setup, model.setupStep == .access { model.setupStep = .shortcut }
-            }
+            trusted = store.accessibilityAllowed()
         }
     }
 
@@ -222,7 +167,7 @@ private struct ShortcutStep: View {
             VStack(alignment: .leading, spacing: 18) {
                 Keycaps(shortcut: store.shortcut)
                 if store.hotKeyRegistered {
-                    Text("Press it now to try it.")
+                    Text(store.isDesignPreview ? "Use Continue in this preview. Your global shortcut is unchanged." : "Press it now to try it.")
                         .font(.system(size: 12))
                         .foregroundStyle(Color(Theme.accent))
                         .lineBox(12)
@@ -240,7 +185,7 @@ private struct ShortcutStep: View {
             SmallButton(title: "Back", symbol: "arrow.left") { model.setupStep = .access }
                 .padding(.leading, -6)
             Spacer(minLength: 0)
-            LensButton(title: "Continue", prominent: true) { model.setupStep = .tryIt }
+            LensButton(title: store.hotKeyRegistered ? "Continue" : "Continue without shortcut", prominent: true) { model.setupStep = .tryIt }
         }
     }
 }
@@ -248,14 +193,22 @@ private struct ShortcutStep: View {
 private struct TryStep: View {
     @ObservedObject var model: PanelModel
     @ObservedObject var store: Store
+    private var readiness: SetupReadiness {
+        SetupReadiness(hasKey: store.hasAPIKey, hasAccess: store.accessibilityAllowed(), hasShortcut: store.hotKeyRegistered)
+    }
 
     var body: some View {
         SetupLayout(
             symbol: "wand.and.stars",
-            title: "Try it on a draft",
-            detail: "Here’s a message that could use a hand. It’s already selected, so press \(store.shortcut.display)."
+            title: readiness == .ready ? "Ready for your first cleanup." : "Start with a pasted draft.",
+            detail: store.isDesignPreview ? "Use Rewrite sample to try a recorded response, or Start writing to leave the walkthrough. This preview does not register your global shortcut." : readiness == .ready
+                ? "Choose Start writing to leave setup, then select text in another app and press \(store.shortcut.display). While you’re here, the shortcut rewrites this sample."
+                : "Choose Start writing, then paste a draft into Tidy. \(readiness.detail)"
         ) {
-            Text(sample)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(store.isDesignPreview ? "Sample draft · recorded preview" : "Sample draft · uses your Anthropic API key")
+                    .font(.system(size: 12)).foregroundStyle(Color(Theme.accent)).lineBox(12)
+                Text(sample)
                 .font(.system(size: 17))
                 .tracking(-0.3)
                 .lineSpacing(7)
@@ -265,12 +218,15 @@ private struct TryStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color(Theme.well)))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(Theme.wellBorder), lineWidth: 1))
+                Text(store.isDesignPreview ? "This design preview makes no API requests." : "This is a live rewrite. API usage is billed to your Anthropic account.")
+                    .font(.system(size: 12)).foregroundStyle(Color(Theme.muted)).lineBox(12)
+            }
         } footer: {
             SmallButton(title: "Back", symbol: "arrow.left") { model.setupStep = .shortcut }
                 .padding(.leading, -6)
             Spacer(minLength: 0)
-            SmallButton(title: "Skip") { model.skipSetup() }
-            LensButton(title: "Clean it up", prominent: true) { model.tryOnSample() }
+            SmallButton(title: "Start writing") { model.skipSetup() }
+            LensButton(title: "Rewrite sample", prominent: true) { model.tryOnSample() }
         }
     }
 

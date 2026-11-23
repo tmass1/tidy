@@ -1,7 +1,7 @@
 import Foundation
 
-enum Prompts {
-    static func system(voice: String?) -> String {
+public enum Prompts {
+    public static func system(voice: String?) -> String {
         var s = """
         You are an editor for messages the user is about to send: emails, texts, Slack and chat messages. \
         Rewrite the message they give you according to the instruction, and return only the finished message.
@@ -23,7 +23,7 @@ enum Prompts {
         return s
     }
 
-    static func user(text: String, instruction: String, app: String?, limit: Int? = nil) -> String {
+    public static func user(text: String, instruction: String, app: String?, limit: Int? = nil) -> String {
         var s = "Instruction: \(instruction)\n"
         if let app { s += "Being written in: \(app)\n" }
         if let limit {
@@ -34,12 +34,12 @@ enum Prompts {
         return s
     }
 
-    static func tweakInstruction(_ tweak: String) -> String {
+    public static func tweakInstruction(_ tweak: String) -> String {
         "Keep the message as it is, except make this change: \(tweak)"
     }
 
     /// Strips wrappers the model sometimes adds (tags, code fences), safely mid-stream.
-    static func clean(_ raw: String, streaming: Bool) -> String {
+    public static func clean(_ raw: String, streaming: Bool) -> String {
         let openTag = "<message>"
         var s = String(raw.drop(while: { $0.isWhitespace }))
         if s.hasPrefix(openTag) {
@@ -66,12 +66,12 @@ enum Prompts {
 
     // MARK: - Voice learning
 
-    static let voiceSystem = """
+    public static let voiceSystem = """
     You maintain a short profile of how one specific person writes. An editing assistant reads it \
     so that cleaned-up messages still sound like that person. Describe only patterns the evidence supports.
     """
 
-    static func voiceLearn(current: String, edits: [HistoryItem], drafts: [String], samples: String?) -> String {
+    public static func voiceLearn(current: String, edits: [HistoryItem], drafts: [String], samples: String?) -> String {
         var s = "Update the writing-voice profile below using the new evidence.\n\n"
         s += "Current profile:\n" + (current.trimmed.isEmpty ? "(none yet)" : current.trimmed) + "\n\n"
 

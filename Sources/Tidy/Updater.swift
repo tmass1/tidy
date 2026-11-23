@@ -1,3 +1,4 @@
+import TidyCore
 import AppKit
 import Security
 

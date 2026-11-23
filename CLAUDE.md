@@ -15,7 +15,7 @@ Codex and Claude work on this project in separate worktrees. Read `docs/agent-wo
 
 ## Stack
 
-- Swift Package (no Xcode project), single executable target, **no third-party dependencies**
+- Mac Swift Package: executable plus shared `TidyCore` library; iOS Xcode project in `iOS/`; **no third-party runtime dependencies**
 - AppKit shell (status item, NSPanel, Carbon hotkey) + SwiftUI views hosted inside it
 - macOS 14+ (Apple Silicon); `swift-tools-version:5.9`, so it compiles in **Swift 5 language mode**
 - Anthropic Messages API over `URLSession.bytes` with SSE streaming; API key in the login Keychain
@@ -47,20 +47,18 @@ scripts/deploy-production.py guarded production deploy (docs/production-deploy.m
 Resources/Info.plist         LSUIElement=true (no Dock icon), bundle id com.tommymassaro.tidy
 Resources/AppIcon.png        1024px source; build.sh turns it into AppIcon.icns with sips/iconutil
 Sources/Tidy/
-  TidyApp.swift              @main entry, String helpers (trimmed, wordCount, firstLine)
+  TidyApp.swift              @main entry (String helpers now in TidyCore/Strings.swift)
   AppDelegate.swift          status item + menu, hotkey → trigger(), showSettings → the panel, hidden Edit menu
   HotKey.swift               Shortcut model (Carbon keycodes/modifiers) + HotKeyCenter (RegisterEventHotKey)
   Selection.swift            Accessibility check; copySelection() sends ⌘C; paste() sends ⌘V; clipboard snapshot/restore
-  Claude.swift               model list + streaming client (AsyncThrowingStream<String>)
-  Prompts.swift              system/user prompts, tweak instruction, output cleanup, voice-learning prompt
-  Diff.swift                 WordDiff (LCS over word/whitespace tokens) + Styled (NSAttributedString for the panel)
+  Diff.swift                 Styled (NSAttributedString for the panel; WordDiff is in TidyCore)
   Theme.swift                Lens design tokens: light/dark colors, glass, type metrics (from the UI handoff's CSS)
   Panel.swift                FloatingPanel, PanelController (show/close/replace, key handling, fit-to-content height),
                              PanelModel, PanelView (the Lens design) + small views, ProseView (NSTextView for the text)
   PanelPages.swift           The panel's tabbed Settings page + shared Lens parts (SettingRow, LensField, LensButton…)
   SettingsView.swift         The Settings tabs: General, Modes, Voice, History (+ ShortcutRecorder, UpdatesRow)
   SetupView.swift            First-launch setup steps in the panel: key (checked), Accessibility, shortcut, practice run
-  Store.swift                Mode, HistoryItem, Keychain, Store (all persisted state)
+  Store.swift                Mac Keychain and Store (Mode/HistoryItem now in TidyCore/Models.swift)
   Updater.swift              checks GitHub's latest release daily, downloads Tidy.zip, verifies team Y5V8Y3BH9A, swaps + relaunches
   UpdateWindow.swift         "A new version of Tidy is available." window, laid out like Sparkle's (notes, skip, remind, install)
 ```
@@ -158,13 +156,21 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   `CheckboxRow`, `LensField`, `LensButton`, `SmallButton`). Modes and History drill in (list → item) to
   fit the 602 pt width. Clicking outside the panel doesn't close it while Settings is showing.
 - **Setup** is a third page (`PanelModel.page == .setup`, step in `setupStep`), opened on first launch while
-  `Store.setupDone` is false and from Settings › General › Run setup. Four steps: the API key, checked with a
-  free `GET /v1/models` call (`Claude.checkKey`) and moving on by itself when it works; Accessibility, which
-  polls and moves on once allowed (launch no longer fires the system prompt on its own); the shortcut as
-  keycaps with the recorder; and a practice run on a pre-selected sample. During setup the hotkey never
-  closes the panel: on the shortcut step it moves on, on the last step it cleans up the sample in the editor
-  (`tryOnSample`), which marks setup done. Esc steps back, then closes. Someone updating who already has a
-  key and Accessibility skips setup.
+  `Store.setupDone` is false and from General › More options › Review setup. Four named steps:
+  Connection, Selection access, Shortcut, Start writing. Connection and General reuse `KeyConnectionEditor`;
+  keys are validated with `GET /v1/models`, then saved with checked Keychain update/add operations.
+  Success remains visible until Continue. Accessibility polls its current state but waits for Continue.
+  The last step offers Start writing (closes setup) or Rewrite sample (a clearly labeled live API call).
+  While setup is open, the hotkey still advances the shortcut step and runs the sample on the final step.
+  Esc steps back, then closes. While recording a shortcut, the recorder owns keyboard events and Esc only
+  cancels recording. Panel close ends recording. The sample label remains after completion; Exit sample clears it.
+- General shows readiness only when key, Accessibility and shortcut are available; a saved key gets a
+  deliberate Change key action. Maintenance/preferences are under More options. Panel close explicitly
+  cancels the shared connection lifecycle, including checks whose underlying request completes late.
+- `scripts/build-desktop-preview.sh` builds a separate DEBUG-only `build/Tidy Preview.app` with a distinct
+  bundle ID, temporary settings/files, no Keychain access, no global hotkey registration, and a recorded
+  rewrite transport. Voice learning is blocked in that preview. It does not install over Tidy. The preview
+  bundle always takes the isolated startup path; `--setup` and `--disconnected` choose alternate states.
 - **Control tray** (the bottom of the editor): mode chips stay on their own row above it; inside it are
   the trail of steps (only once there's a change), the one text field (`Theme.well`), and the status line
   with Replace. A mode run starts a new trail; each typed change adds a step built on the version showing
@@ -215,3 +221,16 @@ the design handoff package (`Tidy-UI-Claude-Handoff`: `screenshots/lens-*.png`, 
   re-render `assets/hero-light.png` (the og:image), then use the guarded production command in `AGENTS.md` after Tommy approves.
 - With reduced motion (or no JavaScript) the demo shows its static finished frame, so the markup's
   default state must stay a complete, correct panel.
+
+## iOS companion (prototype)
+
+`iOS/TidyMobile.xcodeproj` contains the SwiftUI companion and a text Share extension. Its targets
+use the same `TidyCore` library as the Mac executable. `Sources/TidyCore` owns `Models.swift`,
+`Prompts.swift`, `Claude.swift`, `WordDiff.swift`, `Strings.swift`, plus the mobile rewrite lifecycle,
+strict stream parser and validated mode-file transfer. The extraction retains Mac storage contracts; desktop setup refinements are documented in `docs/mac/SETUP-AUDIT.md`.
+
+Read `iOS/README.md`, `docs/ios/AUDIT.md`, and `docs/ios/VERIFICATION.md` before extending mobile.
+The iOS App Group and Keychain group are device-local sharing, not cross-device sync. Preview
+transport is DEBUG-only and visibly labeled. No provider key is bundled; no Mac key is migrated.
+Do not run build.sh for iOS work (it installs and launches the Mac app). Use `swift test`, then
+Xcode's TidyMobile scheme. Keep the companion distinct from the unrelated Tidy UI design-system site.
