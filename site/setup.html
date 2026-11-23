@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Setup guide: Tidy for Mac</title>
-<meta name="description" content="Install Tidy, add your Anthropic API key, allow Accessibility and clean up your first message. Plus what to do when something's not right.">
+<meta name="description" content="Install Tidy, choose your AI and add its key, allow Accessibility and clean up your first message. Plus what to do when something's not right.">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f7f6fb">
 <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
@@ -30,7 +30,7 @@
 <main class="doc">
   <h1>Setup guide</h1>
   <p class="lede">Tidy walks you through all of this the first time it opens. It takes a few minutes, and you need an Apple Silicon Mac with macOS 14 Sonoma or later.</p>
-  <p class="date">Last updated 6 November 2026</p>
+  <p class="date">Last updated 23 November 2026</p>
 
   <h2 id="set-up">Set it up once</h2>
   <ol class="steps">
@@ -39,8 +39,8 @@
       <p><a href="https://github.com/tmass1/tidy/releases/latest/download/Tidy.zip" data-track-download="tidy" data-platform="macos">Download Tidy</a>, open the zip, move Tidy to your Applications folder and open it. Tidy lives in the menu bar, so it won’t appear in the Dock.</p>
     </li>
     <li>
-      <h3>Add your Anthropic API key</h3>
-      <p>Create a key at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a> and paste it into Tidy, which checks that it works. Using the API is billed by Anthropic and is separate from a Claude subscription, so your account needs API credits. The key stays in your Keychain.</p>
+      <h3>Choose your AI and add its key</h3>
+      <p>Pick Claude, ChatGPT, Gemini or Grok. Tidy uses one at a time, and you can switch later in Settings. Create a key with that company (<a href="https://console.anthropic.com/settings/keys">Anthropic</a>, <a href="https://platform.openai.com/api-keys">OpenAI</a>, <a href="https://aistudio.google.com/apikey">Google</a> or <a href="https://console.x.ai/team/default/api-keys">Grok</a>) and paste it into Tidy, which checks that it works. API use is billed by that company and is separate from a Claude or ChatGPT subscription, so your account needs API credit. The key stays in your Keychain. With Gemini, use a key from a paid project for anything private.</p>
     </li>
     <li>
       <h3>Allow Accessibility</h3>
@@ -76,16 +76,19 @@
   <p>Tidy didn’t find any selected text. Select your draft and try again, or paste it into the panel. When Tidy didn’t read your selection, the button pastes the result into your app instead of replacing the selection. Choosing <strong>Clean Up Clipboard</strong> from the menu bar icon works on what you’ve already copied.</p>
 
   <h3>Your API key was rejected</h3>
-  <p>The key may be mistyped, or it may have been deleted. Create a new one at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a> and paste it into Settings (<kbd>⌘</kbd><kbd>,</kbd>).</p>
+  <p>The key may be mistyped, or it may have been deleted. Create a new one with your AI’s company and paste it into Settings (<kbd>⌘</kbd><kbd>,</kbd>), under Your AI.</p>
 
   <h3>This API key doesn’t have access to that model, or Model not found</h3>
   <p>Choose a different writing model in Settings, under General.</p>
 
-  <h3>Rate limited, or Claude is overloaded right now</h3>
+  <h3>Rate limited, or your AI is having trouble right now</h3>
   <p>Wait a moment and press <kbd>⌘</kbd><kbd>R</kbd> to try again.</p>
 
   <h3>A message about your credit balance</h3>
-  <p>Your Anthropic account needs more API credits. You can add them at <a href="https://console.anthropic.com">console.anthropic.com</a>. A Claude subscription doesn’t cover API use.</p>
+  <p>Your account with your AI’s company needs more API credit. A Claude or ChatGPT subscription doesn’t cover API use.</p>
+
+  <h3>Switching to a different AI</h3>
+  <p>Open Settings and choose <strong>Change</strong> beside Your AI. Pick another and paste its key. Tidy switches when the key connects, and removes the old key from your Mac.</p>
 
   <h3>Tidy copies or pastes the wrong thing on your keyboard</h3>
   <p>Tidy presses the physical C and V keys, which can go wrong on keyboard layouts other than QWERTY. This is a known limitation.</p>
@@ -96,7 +99,7 @@
   <pre><code>rm -rf ~/Library/Application\ Support/Tidy
 defaults delete com.tommymassaro.tidy
 security delete-generic-password -s com.tommymassaro.tidy</code></pre>
-  <p>This deletes them for good. Your key still works at Anthropic until you delete it at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a>.</p>
+  <p>This deletes them for good. Your key still works with your AI’s company until you delete it there.</p>
 
   <h2 id="more">Still stuck</h2>
   <p><a href="https://github.com/tmass1/tidy/issues">Report a problem</a> on GitHub, or write to <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a>.</p>

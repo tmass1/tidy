@@ -37,9 +37,10 @@ _Updated October 26, 2026._
   write with ChatGPT, Gemini or Grok as well as Claude, one at a time (see CLAUDE.md, "AI providers"). The
   branch includes Codex's `codex/ios-companion`, so merging it to `main` also brings the iPhone app and
   Codex's Mac setup changes. Still to do before release: test with a real key for each new AI; measure the
-  "fastest / balanced / most careful" labels on the new models; update the site (home page, `/privacy`,
-  `/terms`, `/setup`), which still says Tidy uses Anthropic only; have Gemini's terms reviewed; decide whether
-  the iPhone app gets the same choice.
+  "fastest / balanced / most careful" labels on the new models; have Gemini's terms and the site's Privacy
+  and Terms wording reviewed; decide whether the iPhone app gets the same choice. The site on this branch
+  (home page, `/privacy`, `/terms`, `/setup`) already describes the four AIs: deploy it with the app release,
+  not before, and set each page's "Last updated" date then.
 
 - **Public** at https://github.com/tmass1/tidy. Landing page in `site/`, deployed to
   https://tidy-app.tommymassaro.com by a static-assets Cloudflare Worker (`wrangler.jsonc`), like

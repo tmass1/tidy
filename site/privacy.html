@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy: Tidy for Mac</title>
-<meta name="description" content="What Tidy does with your words. Your draft goes straight to Anthropic with your own key. There's no account and no Tidy server, and everything else stays on your Mac.">
+<meta name="description" content="What Tidy does with your words. Your draft goes straight to the AI you choose, with your own key. There's no account and no Tidy server, and everything else stays on your Mac.">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f7f6fb">
 <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
@@ -29,12 +29,13 @@
 <main class="doc">
   <h1>Privacy</h1>
   <p class="lede">Tidy reads the words you select, so here is exactly what happens to them.</p>
-  <p class="date">Last updated 6 November 2026</p>
+  <p class="date">Last updated 23 November 2026</p>
 
   <section class="short" aria-labelledby="short">
     <h2 id="short">The short version</h2>
     <ul>
-      <li>Your draft goes straight from your Mac to Anthropic, with your own API key, when you ask Tidy to clean it up.</li>
+      <li>Your draft goes straight from your Mac to the AI you chose (Claude, ChatGPT, Gemini or Grok), with your own API key, when you ask Tidy to clean it up.</li>
+      <li>Tidy uses one AI at a time, and your text goes only to that one.</li>
       <li>There’s no Tidy account and no Tidy server, and the app has no analytics.</li>
       <li>Your key, history, modes and writing style stay on your Mac.</li>
       <li>The app checks GitHub for updates by itself.</li>
@@ -43,7 +44,7 @@
   </section>
 
   <h2>The app</h2>
-  <p><strong>Your API key.</strong> It’s stored in your macOS Keychain and only ever sent to Anthropic.</p>
+  <p><strong>Your API key.</strong> It’s stored in your macOS Keychain and only ever sent to the company it belongs to. Tidy keeps one key at a time: switching to another AI removes the old key from your Mac.</p>
   <p><strong>Your selection.</strong> Tidy reads text only when you press its shortcut or choose a command from its menu. It presses <kbd>⌘</kbd><kbd>C</kbd> to copy your selection, then <kbd>⌘</kbd><kbd>V</kbd> to paste the new version when you press Replace. That’s what the Accessibility permission is for. Your clipboard is put back afterwards, unless you turn that off in Settings.</p>
   <p><strong>Your history.</strong> The originals and results of your last 500 cleanups are saved on your Mac. You can clear them in Settings, under History.</p>
   <p><strong>Your modes and writing style.</strong> They’re kept on your Mac, not in an account.</p>
@@ -55,15 +56,18 @@
     <table>
       <thead><tr><th scope="col">Where</th><th scope="col">What’s sent</th><th scope="col">When</th></tr></thead>
       <tbody>
-        <tr><td>api.anthropic.com</td><td>Your draft, the mode or change you asked for, your writing style if it’s on, any character limit, and your key</td><td>When you ask for a cleanup or a change</td></tr>
-        <tr><td>api.anthropic.com</td><td>Recent drafts, your edits, and any samples you paste, with your key</td><td>Only if you turn on Learn my writing style or use Learn from these</td></tr>
-        <tr><td>api.anthropic.com</td><td>Your key, to check that it works</td><td>When you add it</td></tr>
+        <tr><td>Your AI’s API</td><td>Your draft, the mode or change you asked for, your writing style if it’s on, any character limit, and your key</td><td>When you ask for a cleanup or a change</td></tr>
+        <tr><td>Your AI’s API</td><td>Recent drafts, your edits, and any samples you paste, with your key</td><td>Only if you turn on Learn my writing style or use Learn from these</td></tr>
+        <tr><td>Your AI’s API</td><td>Your key, to check that it works</td><td>When you add it</td></tr>
         <tr><td>api.github.com</td><td>A check for a new version</td><td>Shortly after Tidy opens, then once a day</td></tr>
         <tr><td>github.com</td><td>A request for the new version</td><td>When you choose to update, or by itself if you’ve turned on automatic installs</td></tr>
       </tbody>
     </table>
   </div>
-  <p><strong>Anthropic.</strong> You use Tidy under your own Anthropic account, so what you send is handled under Anthropic’s <a href="https://www.anthropic.com/legal/commercial-terms">commercial terms</a> and <a href="https://www.anthropic.com/legal/privacy">privacy policy</a>. Tidy can’t see or change what Anthropic keeps. If a draft is too private to send, don’t run Tidy on it.</p>
+  <p>Your AI’s API is <code>api.anthropic.com</code> for Claude, <code>api.openai.com</code> for ChatGPT, <code>generativelanguage.googleapis.com</code> for Gemini, or <code>api.x.ai</code> for Grok.</p>
+  <p><strong>The AI you choose.</strong> You use Tidy under your own account with that company, so what you send is handled under its terms and privacy policy: Anthropic’s <a href="https://www.anthropic.com/legal/commercial-terms">terms</a> and <a href="https://www.anthropic.com/legal/privacy">privacy policy</a>, OpenAI’s <a href="https://openai.com/policies/services-agreement/">terms</a> and <a href="https://openai.com/policies/privacy-policy/">privacy policy</a>, Google’s <a href="https://ai.google.dev/gemini-api/terms">Gemini API terms</a> and <a href="https://policies.google.com/privacy">privacy policy</a>, or Grok’s <a href="https://x.ai/legal">terms</a> and <a href="https://x.ai/legal/privacy-policy">privacy policy</a>. Tidy can’t see or change what they keep. If a draft is too private to send, don’t run Tidy on it.</p>
+  <p><strong>ChatGPT and Grok.</strong> Tidy asks both not to store the response. OpenAI says it may still keep abuse-monitoring logs for up to 30 days.</p>
+  <p><strong>Gemini.</strong> On Gemini’s free tier, Google may use what you send to improve its products, and people may review it. A key from a paid project isn’t used that way. Google’s terms require the paid tier if you’re in the EEA, UK or Switzerland.</p>
   <p><strong>Update checks.</strong> Like any web request, these show GitHub your IP address. Tidy doesn’t have a setting to turn the check off.</p>
 
   <h2>This website</h2>
@@ -75,7 +79,7 @@
   <p>Your data isn’t sold, and it isn’t shared for advertising.</p>
 
   <h2>Your rights</h2>
-  <p>Depending on where you live, you may have the right to see, correct or delete data held about you, or to object to how it’s used. Tidy keeps nothing about you on a server of its own, so in practice this covers the website’s visit counts. What you send to Anthropic is covered by your account with them. Write to <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a> and you’ll get help with it.</p>
+  <p>Depending on where you live, you may have the right to see, correct or delete data held about you, or to object to how it’s used. Tidy keeps nothing about you on a server of its own, so in practice this covers the website’s visit counts. What you send to your AI’s company is covered by your account with them. Write to <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a> and you’ll get help with it.</p>
 
   <h2>Changes and contact</h2>
   <p>If any of this changes, this page will say so and show a new date. Tidy is made by Tommy Massaro. Questions are welcome at <a href="mailto:hey@tommymassaro.com">hey@tommymassaro.com</a>.</p>
