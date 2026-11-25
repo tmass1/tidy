@@ -14,11 +14,10 @@
   var SITE = "";
 
   var KEY = "phc_uaWkjgzs42jdt5M9k7JX8CHZdMBbzteeJjDJqNhHGf8s";
-  var HOST = "https://us.i.posthog.com";
-  /* The assets host is the API host with "-assets" after the region. Both
-     are real and they are not interchangeable: the `i.` host takes events,
-     this one serves the library. */
-  var ASSETS = "https://us-assets.i.posthog.com";
+  /* The portfolio's relay, which passes everything on to PostHog. The
+     reasoning is in worker/relay.ts there, and not here: this comment is
+     served to every reader. */
+  var HOST = "https://tommymassaro.com/api/relay";
 
   var host = location.hostname;
 
@@ -78,18 +77,22 @@
 
   /* ── 4. Load and start ───────────────────────────────────────────────
      The same loader the portfolio uses in production: the library from the
-     assets host with an `onload`, rather than PostHog's minified stub. The
+     relay with an `onload`, rather than PostHog's minified stub. The
      stub exists only to queue calls made before the library arrives, and
      waiting for onload removes the need for a queue at all. */
   var start = function () {
     window.posthog.init(KEY, {
       api_host: HOST,
+      /* Where the app is, which the SDK would otherwise guess from the relay. */
+      ui_host: "https://us.posthog.com",
+      /* See 5. */
+      capture_pageleave: false,
       /* Only build person profiles for people we identify, which on a set
          of demo sites is nobody — anonymous visitors stay anonymous. */
       person_profiles: "identified_only",
       /* Where Tidy parts from the canonical copy, on purpose: its privacy page
-         says the site counts page views and Download clicks, without cookies,
-         and this keeps that true. Nothing is kept between pages, so each page
+         says the site counts page views, Download clicks and how long a page is
+         on screen, without cookies, and this keeps that true. Nothing is kept between pages, so each page
          load counts as a new visitor, and a visitor isn't followed across the
          other sites. And the project's session recording, automatic clicks,
          heatmaps, page-speed measurements and surveys, switched on in PostHog's
@@ -112,14 +115,86 @@
         ph.register({ site: SITE });
       },
     });
+    timeOnPage(window.posthog);
   };
 
   var el = document.createElement("script");
-  el.src = ASSETS + "/static/array.js";
+  el.src = HOST + "/static/array.js";
   el.onload = start;
   document.head.appendChild(el);
 
-  /* ── 5. Download buttons ─────────────────────────────────────────────
+  /* ── 5. How long the page was on screen ──────────────────────────────
+     One `time_on_page` event each time the page is hidden or closed, and
+     every five minutes while it is not, carrying the seconds since the last.
+     A visit's time is their sum.
+
+     PostHog's own leave event is off in its place. It counts a tab sitting in
+     the background, and one closed after PostHog's thirty-minute timeout
+     opens a new session with no pageview in it: a visit nobody made.
+
+     The same arithmetic as src/scripts/time-on-page.ts in the portfolio,
+     which has the reasoning. The tests there run this copy too. */
+  var timeOnPage = function (ph) {
+    var CHECKPOINT = 5 * 60 * 1000;
+    var SESSION_GAP = 30 * 60 * 1000;
+    var CAP_SECONDS = 30 * 60;
+    var since = null;
+    var pending = 0;
+    var sent = 0;
+    var alive = Date.now();
+
+    var collect = function () {
+      if (since === null) return;
+      var at = Date.now();
+      /* A checkpoint is only ever late because the machine slept. */
+      pending += Math.min(Math.max(at - since, 0), CHECKPOINT);
+      since = at;
+    };
+
+    var report = function () {
+      if (Date.now() - alive >= SESSION_GAP) {
+        pending = 0;
+        return;
+      }
+      var seconds = Math.min(Math.floor(pending / 1000), CAP_SECONDS - sent);
+      if (seconds < 1) return;
+      pending -= seconds * 1000;
+      sent += seconds;
+      alive = Date.now();
+      try {
+        ph.capture(
+          "time_on_page",
+          { seconds: seconds },
+          { transport: "sendBeacon", send_instantly: true },
+        );
+      } catch (e) {
+        /* Never let measurement break a page. */
+      }
+    };
+
+    var hide = function () {
+      collect();
+      since = null;
+      report();
+    };
+
+    var sync = function () {
+      if (document.visibilityState !== "visible") hide();
+      else if (since === null) since = Date.now();
+    };
+
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    window.addEventListener("pagehide", hide);
+    window.addEventListener("pageshow", sync);
+    setInterval(function () {
+      if (since === null) return;
+      collect();
+      report();
+    }, CHECKPOINT);
+  };
+
+  /* ── 6. Download buttons ─────────────────────────────────────────────
      Mark the link and the click is counted:
 
          <a href="/Mark.dmg" data-track-download="mark" data-platform="macos">
@@ -180,4 +255,3 @@
          window.tmTrackDownload("fritter", { platform: "macos" }) */
   window.tmTrackDownload = track;
 })();
-    
